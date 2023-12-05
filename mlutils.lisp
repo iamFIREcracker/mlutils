@@ -2,7 +2,7 @@
 ;;;; See http://quickutil.org for details.
 
 ;;;; To regenerate:
-;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:BND* :BND1 :FN :IF-NOT :IOTA :MKLIST :ONCE-ONLY :RANGE :RECURSIVELY :SPLIT-SEQUENCE ...) :categories '(:ANAPHORIC :PRINTING) :ensure-package T :package "MLUTILS")
+;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:BND* :BND1 :D-B :DOLIST+ :DOLISTS :DORANGE :DORANGEI :DOSEQ :FLET* :FN :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LOOPING :M-V-B :MKLIST :ONCE-ONLY :RANGE :RECURSIVELY :SPLIT-SEQUENCE :SYMB :UNTIL :WHILE :WITH-GENSYMS) :categories '(:ANAPHORIC :PRINTING) :ensure-package T :package "MLUTILS")
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unless (find-package "MLUTILS")
@@ -13,11 +13,16 @@
 (in-package "MLUTILS")
 
 (when (boundp '*utilities*)
-  (setf *utilities* (union *utilities* '(:BND* :BND1 :FN :IF-NOT :IOTA :MKLIST
+  (setf *utilities* (union *utilities* '(:BND* :BND1 :ABBR :D-B :DOLIST+
+                                         :DOLISTS :DORANGE :DORANGEI :DOSEQ
+                                         :FLET* :FN :IF-NOT :IOTA :KEEP-IF
+                                         :KEEP-IF-NOT :MKSTR :SYMB
+                                         :STRING-DESIGNATOR :WITH-GENSYMS
+                                         :LOOPING :M-V-B :MKLIST
                                          :MAKE-GENSYM-LIST :ONCE-ONLY :RANGE
                                          :LET1 :RECURSIVELY :SPLIT-SEQUENCE
-                                         :MKSTR :SYMB :UNTIL :AIF :AAND :AWHEN
-                                         :SPRS :SPRN :SPR :PRS :PRN :PR))))
+                                         :UNTIL :WHILE :AIF :AAND :AWHEN :SPRS
+                                         :SPRN :SPR :PRS :PRN :PR))))
 
   (defmacro bnd* (bindings &body body)
     "Like LET*, but more powerful.
@@ -93,6 +98,100 @@ BND* will expand to a DESTRUCTURING-BIND call:
        ,@body))
   
 
+  (defmacro abbr (short long)
+    "Defines a new function/macro named `short` and sharing
+FDEFINITION/MACRO-FUNCTION with `long`."
+    `(eval-when (:compile-toplevel :load-toplevel :execute)
+       (cond
+         ((macro-function ',long)
+          (setf (macro-function ',short) (macro-function ',long))
+          #+ccl (setf (ccl:arglist ',short) (ccl:arglist ',long)))
+         ((fboundp ',long)
+          (setf (fdefinition ',short) (fdefinition ',long))
+          #+ccl (setf (ccl:arglist ',short) (ccl:arglist ',long)))
+         (t
+           (error "Can't abbreviate ~a" ',long)))))
+  
+  (abbr d-b destructuring-bind)
+
+  (defmacro dolist+ ((var list &optional (result nil result?)) &body body)
+    "Like DOLIST, except it supports destructuring of `var`.
+
+  > (let ((list '((1 a) (2 b))))
+      (dolist+ ((a b) list :ret)
+        (print (list a b))))
+  ;;(1 A)
+  ;;(2 B)
+  :RET
+  "
+    `(loop :for ,var :in ,list do ,@body ,@(when result? `(:finally (return ,result)))))
+  
+
+  (defmacro dolists (((var1 list1) (var2 list2) &rest var-list-specs) &body body)
+    "Like DOLIST, except it allows you to iterate over multiple lists in parallel.
+
+  > (let ((list '(1 2 3 4)))
+      (dolists ((x1 list)
+                (x2 (cdr list)))
+        (print (list x1 x2))))
+  ;; (1 2)
+  ;; (2 3)
+  ;; (3 4)
+  NIL
+  "
+    `(loop
+       :for ,var1 :in ,list1 :for ,var2 :in ,list2
+       ,@(loop for (var list) in var-list-specs
+               collect 'FOR collect var collect 'IN collect list)
+       do ,@body))
+  
+
+  (defmacro dorange ((var from to &optional (step 1) (result nil result?)) &body body)
+    "Binds `var` to all the distinct values in the range [`from`, `to`[, with
+`step` step (note: `to` is excluded), and runs `body` inside that
+lexical environmnet."
+    (let ((step-g (gensym "step"))
+          (to-g (gensym "to")))
+      `(do* ((,step-g ,step)
+             (,to-g ,to)
+             (,var ,from (+ ,var ,step-g)))
+         ((if (>= ,step-g 0) (>= ,var ,to-g) (<= ,var ,to-g))
+          ,@(when result? `(,result)))
+         ,@body)))
+  
+
+  (defmacro dorangei ((var from to &optional (step 1) (result nil result?)) &body body)
+    "Like DORANGE, `to` is inclusive (the range is: [`from`, `to`])."
+    (let ((step-g (gensym "step"))
+          (to-g (gensym "to")))
+      `(do* ((,step-g ,step)
+             (,to-g ,to)
+             (,var ,from (+ ,var ,step-g)))
+         ((if (>= ,step-g 0) (> ,var ,to-g) (< ,var ,to-g))
+          ,@(when result? `(,result)))
+         ,@body)))
+  
+
+  (defmacro doseq ((var seq &optional return) &body body)
+    "Iterate across the sequence `seq`, binding the variable `var` to
+each element of the sequence and executing `body`. Return the value
+`return` from the iteration form."
+    `(block nil
+       (map nil #'(lambda (,var)
+                    (tagbody
+                       ,@body))
+            ,seq)
+       ,return))
+  
+
+  (defmacro flet* (&rest body)
+    "Like LABELS, but 1 character shorter.
+Also, FLET* is to FLET what LET* is to LET.
+
+Note: cannot use ABBR for this, because LABELS is a special operator."
+    `(labels ,@body))
+  
+
   (defmacro fn (name lambda-list &body body)
     "Like LAMBDA, but 4 characters shorter."
     `(lambda ,name ,lambda-list ,@body))
@@ -120,6 +219,152 @@ Examples:
           for i = (+ (- (+ start step) step)) then (+ i step)
           collect i))
   
+  (abbr keep-if remove-if-not)
+  (abbr keep-if-not remove-if)
+
+  (defun mkstr (&rest args)
+    "Receives any number of objects (string, symbol, keyword, char, number), extracts all printed representations, and concatenates them all into one string.
+
+Extracted from _On Lisp_, chapter 4."
+    (with-output-to-string (s)
+      (dolist (a args) (princ a s))))
+  
+
+  (defun symb (&rest args)
+    "Receives any number of objects, concatenates all into one string with `#'mkstr` and converts them to symbol.
+
+Extracted from _On Lisp_, chapter 4.
+
+See also: `symbolicate`"
+    (values (intern (apply #'mkstr args))))
+  
+
+  (deftype string-designator ()
+    "A string designator type. A string designator is either a string, a symbol,
+or a character."
+    `(or symbol string character))
+  
+
+  (defmacro with-gensyms (names &body forms)
+    "Binds each variable named by a symbol in `names` to a unique symbol around
+`forms`. Each of `names` must either be either a symbol, or of the form:
+
+    (symbol string-designator)
+
+Bare symbols appearing in `names` are equivalent to:
+
+    (symbol symbol)
+
+The string-designator is used as the argument to `gensym` when constructing the
+unique symbol the named variable will be bound to."
+    `(let ,(mapcar (lambda (name)
+                     (multiple-value-bind (symbol string)
+                         (etypecase name
+                           (symbol
+                            (values name (symbol-name name)))
+                           ((cons symbol (cons string-designator null))
+                            (values (first name) (string (second name)))))
+                       `(,symbol (gensym ,string))))
+            names)
+       ,@forms))
+
+  (defmacro with-unique-names (names &body forms)
+    "Binds each variable named by a symbol in `names` to a unique symbol around
+`forms`. Each of `names` must either be either a symbol, or of the form:
+
+    (symbol string-designator)
+
+Bare symbols appearing in `names` are equivalent to:
+
+    (symbol symbol)
+
+The string-designator is used as the argument to `gensym` when constructing the
+unique symbol the named variable will be bound to."
+    `(with-gensyms ,names ,@forms))
+  
+
+  (defmacro looping (&body body)
+    "Run `body` in an environment where the symbols COLLECT!, SUM!, COUNT!, MIN!
+and MAX! are bound to functions that can be used to collect, sum, count,
+minimize or maximize things respectively.
+
+Mixed usage of COLLECT!, SUM!, COUNT!, MIN! and MAX! is not supported.
+
+Examples:
+
+  (looping
+    (dotimes (i 5)
+      (if (oddp i)
+        (collect! i))))
+  =>
+  (1 3)
+
+  (looping
+    (dotimes (i 5)
+      (if (oddp i)
+        (sum! i))))
+  =>
+  4
+
+  (looping
+    (dotimes (i 5)
+      (count! (oddp i))))
+  =>
+  2
+
+  (looping
+    (dotimes (i 5)
+      (sum! i)
+      (count! (oddp i))))
+  ;; Signals an ERROR: Cannot use COUNT! together with SUM!
+  "
+    (with-gensyms (loop-type result)
+      `(let (,loop-type ,result)
+         (flet ((,(symb "COLLECT!") (item)
+                 (if (and ,loop-type (not (eql ,loop-type 'collect!)))
+                   (error "Cannot use COLLECT! together with ~A" ,loop-type)
+                   (progn
+                     (if (not ,loop-type)
+                       (setf ,loop-type 'collect! ,result nil))
+                     (push item ,result)
+                     item)))
+                (,(symb "SUM!") (item)
+                 (if (and ,loop-type (not (eql ,loop-type 'sum!)))
+                   (error "Cannot use SUM! together with ~A" ,loop-type)
+                   (progn
+                     (if (not ,loop-type)
+                       (setf ,loop-type 'sum! ,result 0))
+                     (incf ,result item)
+                     item)))
+                (,(symb "COUNT!") (item)
+                 (if (and ,loop-type (not (eql ,loop-type 'count!)))
+                   (error "Cannot use COUNT! together with ~A" ,loop-type)
+                   (progn
+                     (if (not ,loop-type)
+                       (setf ,loop-type 'count! ,result 0))
+                     (when item
+                       (incf ,result)
+                       item))))
+                (,(symb "MIN!") (item)
+                 (if (and ,loop-type (not (eql ,loop-type 'min!)))
+                   (error "Cannot use MIN! together with ~A" ,loop-type)
+                   (progn
+                     (if (not ,loop-type)
+                       (setf ,loop-type 'min! ,result item))
+                     (setf ,result (min ,result item)))))
+                (,(symb "MAX!") (item)
+                 (if (and ,loop-type (not (eql ,loop-type 'max!)))
+                   (error "Cannot use MAX! together with ~A" ,loop-type)
+                   (progn
+                     (if (not ,loop-type)
+                       (setf ,loop-type 'max! ,result item))
+                     (setf ,result (max ,result item))))))
+           ,@body)
+         (if (eq ,loop-type 'collect!)
+           (nreverse ,result)
+           ,result))))
+  
+  (abbr m-v-b multiple-value-bind)
 
   (defun mklist (obj)
     "If not already a list, mklist will return a
@@ -319,27 +564,16 @@ stopped."
                             sequence start end count remove-empty-subseqs))))
   
 
-  (defun mkstr (&rest args)
-    "Receives any number of objects (string, symbol, keyword, char, number), extracts all printed representations, and concatenates them all into one string.
-
-Extracted from _On Lisp_, chapter 4."
-    (with-output-to-string (s)
-      (dolist (a args) (princ a s))))
-  
-
-  (defun symb (&rest args)
-    "Receives any number of objects, concatenates all into one string with `#'mkstr` and converts them to symbol.
-
-Extracted from _On Lisp_, chapter 4.
-
-See also: `symbolicate`"
-    (values (intern (apply #'mkstr args))))
-  
-
   (defmacro until (expression &body body)
     "Executes `body` until `expression` is true."
     `(do ()
          (,expression)
+       ,@body))
+  
+
+  (defmacro while (expression &body body)
+    "Executes `body` while `expression` is true."
+    `(loop while ,expression do
        ,@body))
   
 
@@ -415,8 +649,10 @@ See also: `symbolicate`"
     (first args))
   
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (export '(bnd* bnd1 fn if-not iota mklist once-only range recursively
-            split-sequence split-sequence-if split-sequence-if-not symb until
-            aand awhen aif sprs sprn spr prs prn pr)))
+  (export '(bnd* bnd1 d-b dolist+ dolists dorange dorangei doseq flet* fn
+            if-not iota keep-if keep-if-not looping m-v-b mklist once-only
+            range recursively split-sequence split-sequence-if
+            split-sequence-if-not symb until while with-gensyms
+            with-unique-names aand awhen aif sprs sprn spr prs prn pr)))
 
 ;;;; END OF mlutils.lisp ;;;;

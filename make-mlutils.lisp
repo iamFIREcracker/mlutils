@@ -10,9 +10,20 @@
 
                :bnd*
                :bnd1
+               :d-b
+               :dolist+
+               :dolists
+               :dorange
+               :dorangei
+               :doseq
+               :flet*
                :fn
                :if-not
                :iota
+               :keep-if
+               :keep-if-not
+               :looping
+               :m-v-b
                :mklist
                :once-only
                :range
@@ -20,6 +31,8 @@
                :split-sequence
                :symb
                :until
+               :while
+               :with-gensyms
 
                )
 
