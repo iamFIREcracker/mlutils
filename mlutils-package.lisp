@@ -2,7 +2,7 @@
   (UNLESS (FIND-PACKAGE "MLUTILS")
     (DEFPACKAGE "MLUTILS"
       (:DOCUMENTATION "Package that contains Quickutil utility functions.")
-      (:USE :CL))))
+      (:USE :CL :NAMED-READTABLES))))
 (IN-PACKAGE "MLUTILS")
 
 (DEFPARAMETER *UTILITIES* NIL)

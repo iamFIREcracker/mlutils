@@ -8,31 +8,45 @@
   "mlutils.lisp"
   :utilities '(
 
+               :@
+               :alist-keys
+               :alist-values
+               :appendf
+               :assoc-value
                :bnd*
                :bnd1
                :d-b
-               :dolist+
                :dolists
                :dorange
                :dorangei
                :doseq
+               :doseq
                :flet*
                :fn
+               :if-let
                :if-not
                :iota
                :keep-if
                :keep-if-not
+               :last-elt
                :looping
                :m-v-b
                :mklist
                :once-only
+               :plist-keys
+               :plist-values
+               :pmx1
                :range
                :recursively
                :split-sequence
                :symb
                :until
+               :w/gensyms
+               :w/slots
+               :when-let
                :while
                :with-gensyms
+               :~>
 
                )
 
@@ -47,7 +61,7 @@
            (unless (find-package "MLUTILS")
              (defpackage "MLUTILS"
                (:documentation "Package that contains Quickutil utility functions.")
-               (:use :cl))))
+               (:use :cl :named-readtables))))
          outfile)
   (terpri outfile)
   (prin1 '(in-package "MLUTILS") outfile)
