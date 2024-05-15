@@ -2,7 +2,7 @@
 ;;;; See http://quickutil.org for details.
 
 ;;;; To regenerate:
-;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :ALIST-KEYS :ALIST-VALUES :APPENDF :ASSOC-VALUE :BND* :BND1 :D-B :DOLISTS :DORANGE :DORANGEI :DOSEQ :DOSEQ :FLET* :FN :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LOOPING :M-V-B :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX1 :RANGE :RECURSIVELY :SPLIT-SEQUENCE :SYMB :UNTIL :W/GENSYMS :W/SLOTS :WHEN-LET :WHILE :WITH-GENSYMS :~>) :categories '(:ANAPHORIC :PRINTING) :ensure-package T :package "MLUTILS")
+;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :ALIST-KEYS :ALIST-VALUES :APPENDF :ASSOC-VALUE :BND* :BND1 :D-B :DOLISTS :DORANGE :DORANGEI :DOSEQ :DOSEQ :FLET* :FN :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LET1 :LOOPING :M-V-B :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX1 :RANGE :RECURSIVELY :STRING-ENDS-WITH-P :STRING-STARTS-WITH-P :SPLIT-SEQUENCE :SYMB :UNTIL :W/GENSYMS :W/SLOTS :WHEN-LET :WHILE :WITH-GENSYMS :~>) :categories '(:ANAPHORIC :PRINTING) :ensure-package T :package "MLUTILS")
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unless (find-package "MLUTILS")
@@ -23,13 +23,15 @@
                                          :EMPTYP :SAFE-ENDP :CIRCULAR-LIST
                                          :PROPER-LIST-LENGTH/LAST-CAR
                                          :PROPER-LIST-P :PROPER-LIST
-                                         :PROPER-SEQUENCE :LAST-ELT :LOOPING
-                                         :M-V-B :MKLIST :PLIST-KEYS
+                                         :PROPER-SEQUENCE :LAST-ELT :LET1
+                                         :LOOPING :M-V-B :MKLIST :PLIST-KEYS
                                          :PLIST-VALUES :PMX1 :RANGE
-                                         :RECURSIVELY :SPLIT-SEQUENCE :MKSTR
-                                         :SYMB :UNTIL :W/GENSYMS :W/SLOTS
-                                         :WHEN-LET :WHILE :~> :LET1 :AIF :AAND
-                                         :AWHEN :SPRS :SPRN :SPR :PRS :PRN :PR))))
+                                         :RECURSIVELY :STRING-ENDS-WITH-P
+                                         :STRING-STARTS-WITH-P :SPLIT-SEQUENCE
+                                         :MKSTR :SYMB :UNTIL :W/GENSYMS
+                                         :W/SLOTS :WHEN-LET :WHILE :~> :AIF
+                                         :AAND :AWHEN :SPRS :SPRN :SPR :PRS
+                                         :PRN :PR))))
 
   (defmacro @ (x &rest places)
     ;;"XXX"
@@ -135,11 +137,11 @@ unique symbol the named variable will be bound to."
       ((define-alist-get (name get-entry get-value-from-entry add doc)
          `(progn
             (declaim (inline ,name))
-            (defun ,name (alist key &key (test 'eql))
+            (defun ,name (alist key &key (test 'equal))
               ,doc
               (let ((entry (,get-entry key alist :test test)))
                 (values (,get-value-from-entry entry) entry)))
-            (define-setf-expander ,name (place key &key (test ''eql)
+            (define-setf-expander ,name (place key &key (test ''equal)
                                                    &environment env)
               (multiple-value-bind
                     (temporary-variables initforms newvals setter getter)
@@ -599,6 +601,12 @@ sequence, is an empty sequence, or if OBJECT cannot be stored in SEQUENCE."
                     :expected-type '(and proper-sequence (not (satisfies emptyp))))))))
   
 
+  (defmacro let1 (var val &body body)
+    "Bind VAR to VAL within BODY. Equivalent to LET with one binding."
+    `(let ((,var ,val))
+       ,@body))
+  
+
   (defmacro looping (&body body)
     "Run `body` in an environment where the symbols COLLECT!, APPEND!, ADJOIN!,
 SUM!, MULTIPLY!, COUNT!, MINIMIZE!, and MAXIMIZE! are bound to functions that
@@ -761,6 +769,18 @@ In `body` the symbol `recur` will be bound to the function for recurring."
                  ,@body))
          (,(intern "RECUR") ,@values))))
   )                                        ; eval-when
+
+  (defun string-ends-with-p (suffix s)
+    "Returns T if the last few characters of `s` are equal to `suffix`."
+    (and (<= (length suffix) (length s))
+         (string= suffix s :start2 (- (length s) (length suffix)))))
+  
+
+  (defun string-starts-with-p (prefix s)
+    "Returns T if the first few characters of `s` are equal to `prefix`."
+    (and (<= (length prefix) (length s))
+         (string= prefix s :end2 (length prefix))))
+  
 
   (defun split-from-end (position-fn sequence start end count remove-empty-subseqs)
     (loop
@@ -1027,12 +1047,6 @@ PROGN."
              ,result)))))
   
 
-  (defmacro let1 (var val &body body)
-    "Bind VAR to VAL within BODY. Equivalent to LET with one binding."
-    `(let ((,var ,val))
-       ,@body))
-  
-
   (defmacro aif (test then &optional else)
     "Like IF, except binds the result of `test` to IT (via LET) for the scope of `then` and `else` expressions."
     (aif-expand test then else))
@@ -1107,10 +1121,11 @@ PROGN."
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (export '(@ alist-keys alist-values appendf assoc-value rassoc-value bnd*
             bnd1 d-b dolists dorange dorangei doseq flet* fn if-let if-not iota
-            keep-if keep-if-not last-elt looping m-v-b mklist once-only
-            plist-keys plist-values pmx1 range recursively split-sequence
-            split-sequence-if split-sequence-if-not symb until w/gensyms
-            w/slots when-let when-let* while with-gensyms with-unique-names ~>
-            aand awhen aif sprs sprn spr prs prn pr)))
+            keep-if keep-if-not last-elt let1 looping m-v-b mklist once-only
+            plist-keys plist-values pmx1 range recursively string-ends-with-p
+            string-starts-with-p split-sequence split-sequence-if
+            split-sequence-if-not symb until w/gensyms w/slots when-let
+            when-let* while with-gensyms with-unique-names ~> aand awhen aif
+            sprs sprn spr prs prn pr)))
 
 ;;;; END OF mlutils.lisp ;;;;

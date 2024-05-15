@@ -29,6 +29,7 @@
                :keep-if
                :keep-if-not
                :last-elt
+               :let1
                :looping
                :m-v-b
                :mklist
@@ -38,6 +39,8 @@
                :pmx1
                :range
                :recursively
+               :string-ends-with-p
+               :string-starts-with-p
                :split-sequence
                :symb
                :until
