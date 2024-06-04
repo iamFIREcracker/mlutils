@@ -39,10 +39,19 @@
                :pmx1
                :range
                :recursively
+               :split-sequence
                :string-ends-with-p
                :string-starts-with-p
-               :split-sequence
+               :subdivide
                :symb
+               :undefun
+               :undefmacro
+               :undefvar
+               :undefparameter
+               :undefconstant
+               :undefpackage
+               :undefclass
+               :undefmethod
                :until
                :w/gensyms
                :w/slots
