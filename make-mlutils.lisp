@@ -16,6 +16,8 @@
                :bnd*
                :bnd1
                :d-b
+               :dbg
+               :dbgl
                :dolists
                :dorange
                :dorangei
@@ -36,7 +38,7 @@
                :once-only
                :plist-keys
                :plist-values
-               :pmx1
+               :pmx
                :range
                :recursively
                :split-sequence

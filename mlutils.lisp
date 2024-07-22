@@ -2,7 +2,7 @@
 ;;;; See http://quickutil.org for details.
 
 ;;;; To regenerate:
-;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :ALIST-KEYS :ALIST-VALUES :APPENDF :ASSOC-VALUE :BND* :BND1 :D-B :DOLISTS :DORANGE :DORANGEI :DOSEQ :DOSEQ :FLET* :FN :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LET1 :LOOPING :M-V-B :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX1 :RANGE :RECURSIVELY :SPLIT-SEQUENCE :STRING-ENDS-WITH-P :STRING-STARTS-WITH-P :SUBDIVIDE :SYMB :UNDEFUN :UNDEFMACRO :UNDEFVAR :UNDEFPARAMETER :UNDEFCONSTANT :UNDEFPACKAGE :UNDEFCLASS :UNDEFMETHOD :UNTIL :W/GENSYMS :W/SLOTS :WHEN-LET :WHILE :WITH-GENSYMS :~>) :categories '(:ANAPHORIC :PRINTING) :ensure-package T :package "MLUTILS")
+;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :ALIST-KEYS :ALIST-VALUES :APPENDF :ASSOC-VALUE :BND* :BND1 :D-B :DBG :DBGL :DOLISTS :DORANGE :DORANGEI :DOSEQ :DOSEQ :FLET* :FN :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LET1 :LOOPING :M-V-B :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX :RANGE :RECURSIVELY :SPLIT-SEQUENCE :STRING-ENDS-WITH-P :STRING-STARTS-WITH-P :SUBDIVIDE :SYMB :UNDEFUN :UNDEFMACRO :UNDEFVAR :UNDEFPARAMETER :UNDEFCONSTANT :UNDEFPACKAGE :UNDEFCLASS :UNDEFMETHOD :UNTIL :W/GENSYMS :W/SLOTS :WHEN-LET :WHILE :WITH-GENSYMS :~>) :categories '(:ANAPHORIC :PRINTING) :ensure-package T :package "MLUTILS")
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unless (find-package "MLUTILS")
@@ -25,9 +25,8 @@
                                          :PROPER-LIST-P :PROPER-LIST
                                          :PROPER-SEQUENCE :LAST-ELT :LET1 :AIF
                                          :LOOPING :M-V-B :MKLIST :PLIST-KEYS
-                                         :PLIST-VALUES :PMX1 :RANGE
-                                         :RECURSIVELY :SPLIT-SEQUENCE
-                                         :STRING-ENDS-WITH-P
+                                         :PLIST-VALUES :PMX :RANGE :RECURSIVELY
+                                         :SPLIT-SEQUENCE :STRING-ENDS-WITH-P
                                          :STRING-STARTS-WITH-P :SUBDIVIDE
                                          :MKSTR :SYMB :UNDEFUN :UNDEFMACRO
                                          :UNDEFVAR :UNDEFPARAMETER
@@ -35,7 +34,7 @@
                                          :UNDEFCLASS :UNDEFMETHOD :UNTIL
                                          :W/GENSYMS :W/SLOTS :WHEN-LET :WHILE
                                          :~> :AAND :AWHEN :SPRS :SPRN :SPR :PRS
-                                         :PRN :PR))))
+                                         :PRN :PR :DBGL :DBG))))
 
   (defmacro @ (x &rest places)
     ;;"XXX"
@@ -1036,6 +1035,7 @@ simply changing DEFCLASS into UNDEFCLASS"
     `(setf (find-class ,class) nil))
   
 
+  ;; https://groups.google.com/g/comp.lang.lisp/c/W6OrfjLhPJ8/m/txPfD-pPqPMJ
   (defmacro undefmethod (name &rest args)
     "Removes a method from a generic-function `name`.
 
@@ -1218,37 +1218,55 @@ PROGN."
   
 
   (defun sprs (&rest args)
-    "Print all its `args` into a string, separated by a space, and return it."
+    "Print `args` into a string, separated by a space, and return it."
     (format nil "~{~A~^ ~}" args))
   
 
   (defun sprn (&rest args)
-    "Prints all its `args` into a string, separated by a newline, and return it."
+    "Print `args` into a string, separated by a newline, and return it."
     (format nil "~{~A~^~%~}" args))
   
 
   (defun spr (&rest args)
-    "Prints all its `args` into a string, and return it."
+    "Print `args` into a string, and return it."
     (format nil "~{~A~}" args))
   
 
   (defun prs (&rest args)
-    "Print all its `args` to screen, separated by a space. Returns the first arg."
+    "Print `args` to screen, separated by a space. Returns the first arg."
     (format t "~{~A~^ ~}" args)
     (finish-output)
     (first args))
   
 
   (defun prn (&rest args)
-    "Prints all its `args` to screen, separated by a newline. Returns the first arg."
+    "Print `args` to screen, separated by a newline. Returns the first arg."
     (format t "~{~A~^~%~}" args)
     (finish-output)
     (first args))
   
 
   (defun pr (&rest args)
-    "Prints all its `args` to screen. Returns the first arg."
+    "Print `args` to screen. Returns the first arg."
     (format t "~{~A~}" args)
+    (finish-output)
+    (first args))
+  
+
+  (defmacro dbgl (&rest args)
+    "Print `args`, labeled, separated by a newline, and followed by a final
+newline.  Returns the last arg. labeled and readably."
+    `(prog1
+       (progn ,@(mapcar (lambda (arg) `(prs ',arg ,arg)) args))
+       (terpri)
+       (finish-output)))
+  
+
+  (defun dbg (&rest args)
+    "Print `args` to screen, separated by a space, and followed by a newline.
+Returns the first arg."
+    (format t "~{~A~^ ~}" args)
+    (terpri)
     (finish-output)
     (first args))
   
@@ -1256,11 +1274,12 @@ PROGN."
   (export '(@ alist-keys alist-values appendf assoc-value rassoc-value bnd*
             bnd1 d-b dolists dorange dorangei doseq flet* fn if-let if-not iota
             keep-if keep-if-not last-elt let1 looping m-v-b mklist once-only
-            plist-keys plist-values pmx1 range recursively split-sequence
+            plist-keys plist-values pmx range recursively split-sequence
             split-sequence-if split-sequence-if-not string-ends-with-p
             string-starts-with-p subdivide symb undefun undefmacro undefvar
             undefparameter undefconstant undefpackage undefclass undefmethod
             until w/gensyms w/slots when-let when-let* while with-gensyms
-            with-unique-names ~> aand awhen aif sprs sprn spr prs prn pr)))
+            with-unique-names ~> aand awhen aif sprs sprn spr prs prn pr dbgl
+            dbg)))
 
 ;;;; END OF mlutils.lisp ;;;;
