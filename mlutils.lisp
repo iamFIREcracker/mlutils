@@ -2,7 +2,7 @@
 ;;;; See http://quickutil.org for details.
 
 ;;;; To regenerate:
-;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :ALIST-KEYS :ALIST-VALUES :APPENDF :ASSOC-VALUE :BND* :BND1 :D-B :DBG :DBGL :DOLISTS :DORANGE :DORANGEI :DOSEQ :DOSEQ :FLET* :FN :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LET1 :LOOPING :M-V-B :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX :RANGE :RECURSIVELY :SPLIT-SEQUENCE :STRING-ENDS-WITH-P :STRING-STARTS-WITH-P :SUBDIVIDE :SYMB :UNDEFUN :UNDEFMACRO :UNDEFVAR :UNDEFPARAMETER :UNDEFCONSTANT :UNDEFPACKAGE :UNDEFCLASS :UNDEFMETHOD :UNTIL :W/GENSYMS :W/SLOTS :WHEN-LET :WHILE :WITH-GENSYMS :~> :~>>) :categories '(:ANAPHORIC :PRINTING) :ensure-package T :package "MLUTILS")
+;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :ALIST-KEYS :ALIST-VALUES :APPENDF :ASSOC-VALUE :BND* :BND1 :D-B :DBG :DBGL :DOLISTS :DORANGE :DORANGEI :DOSEQ :DOSEQ :FLET* :FN :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LET1 :LOOPING :M-V-B :MAKE-KEYWORD :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX :RANGE :RECURSIVELY :SPLIT :SPLIT-SEQUENCE :STRING-ENDS-WITH-P :STRING-STARTS-WITH-P :SUBDIVIDE :SYMB :UNDEFCLASS :UNDEFCONSTANT :UNDEFMACRO :UNDEFMETHOD :UNDEFPACKAGE :UNDEFPARAMETER :UNDEFUN :UNDEFVAR :UNTIL :W/GENSYMS :W/SLOTS :WHEN-LET :WHILE :WITH-GENSYMS :~> :~>>) :categories '(:ANAPHORIC :PRINTING) :ensure-package T :package "MLUTILS")
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unless (find-package "MLUTILS")
@@ -24,17 +24,18 @@
                                          :PROPER-LIST-LENGTH/LAST-CAR
                                          :PROPER-LIST-P :PROPER-LIST
                                          :PROPER-SEQUENCE :LAST-ELT :LET1 :AIF
-                                         :LOOPING :M-V-B :MKLIST :PLIST-KEYS
-                                         :PLIST-VALUES :PMX :RANGE :RECURSIVELY
-                                         :SPLIT-SEQUENCE :STRING-ENDS-WITH-P
+                                         :LOOPING :M-V-B :MAKE-KEYWORD :MKLIST
+                                         :PLIST-KEYS :PLIST-VALUES :PMX :RANGE
+                                         :RECURSIVELY :SPLIT-SEQUENCE :SPLIT
+                                         :STRING-ENDS-WITH-P
                                          :STRING-STARTS-WITH-P :SUBDIVIDE
-                                         :MKSTR :SYMB :UNDEFUN :UNDEFMACRO
-                                         :UNDEFVAR :UNDEFPARAMETER
-                                         :UNDEFCONSTANT :UNDEFPACKAGE
-                                         :UNDEFCLASS :UNDEFMETHOD :UNTIL
-                                         :W/GENSYMS :W/SLOTS :WHEN-LET :WHILE
-                                         :~> :~>> :AAND :AWHEN :SPRS :SPRN :SPR
-                                         :PRS :PRN :PR :DBGL :DBG))))
+                                         :MKSTR :SYMB :UNDEFCLASS
+                                         :UNDEFCONSTANT :UNDEFMACRO
+                                         :UNDEFMETHOD :UNDEFPACKAGE
+                                         :UNDEFPARAMETER :UNDEFUN :UNDEFVAR
+                                         :UNTIL :W/GENSYMS :W/SLOTS :WHEN-LET
+                                         :WHILE :~> :~>> :AAND :AWHEN :SPRS
+                                         :SPRN :SPR :PRS :PRN :PR :DBG :DBGL))))
 
   (defmacro @ (x &rest places)
     ;;"XXX"
@@ -748,6 +749,11 @@ Examples:
   
   (abbr m-v-b multiple-value-bind)
 
+  (defun make-keyword (name)
+    "Interns the string designated by `name` in the `keyword` package."
+    (intern (string name) :keyword))
+  
+
   (defun mklist (obj)
     "If not already a list, mklist will return a
    new list with its param as element"
@@ -766,7 +772,7 @@ Examples:
     (loop for v in (cdr plist) by #'cddr collect v))
   
 
-  (defmacro pmx1 (form)
+  (defmacro pmx (form)
     "MACROEXPAND-1 and then PRETTY-PRINT `form`."
     `(pprint (macroexpand-1 ',form)))
   
@@ -911,6 +917,7 @@ stopped."
                               (position-if-not predicate sequence :start start :key key))
                             sequence start end count remove-empty-subseqs))))
   
+  (abbr split split-sequence)
 
   (defun string-ends-with-p (suffix s)
     "Returns T if the last few characters of `s` are equal to `suffix`."
@@ -963,46 +970,14 @@ See also: `symbolicate`"
     (values (intern (apply #'mkstr args))))
   
 
-  (defmacro undefun (name lambda-list &body body)
-    "Removes the function or macro definition, if any, of `name` in the global
-environment.
+  (defmacro undefclass (class direct-superclasses direct-slots &rest options)
+    "Removes the association between `class` and its class object.
 
-Similar to FMAKUNBOUND, except it has the same signature of DEFUN; this makes
-it particularly easy to undefine a function or a macro by simply changing DEFUN
-into UNDEFUN and DEFMACRO into UNDEFMACRO"
-    (declare (ignore lamda-list body))
-    `(fmakunbound ',name))
-  
-
-  (defmacro undefmacro (name lambda-list &body body)
-    "Removes the function or macro definition, if any, of `name` in the global
-environment.
-
-Similar to FMAKUNBOUND, except it has the same signature of DEFUN; this makes
-it particularly easy to undefine a function or a macro by simply changing DEFUN
-into UNDEFUN and DEFMACRO into UNDEFMACRO"
-    (declare (ignore lamda-list body))
-    `(fmakunbound ',name))
-  
-
-  (defmacro undefvar (var &optional (val nil) (doc nil))
-    "Makes the symbol be unbound, regardless of whether it was previously bound.
-
-Similar to MAKUNBOUND, except it has the same signature of DEFVAR; this makes
-it particularly easy to make a symbol unbound by simply changing DEFVAR into
-UNDEFVAR"
-    (declare (ignore val doc))
-    `(makunbound ',var))
-  
-
-  (defmacro undefparameter (var val &optional (doc nil))
-    "Makes the symbol be unbound, regardless of whether it was previously bound.
-
-Similar to MAKUNBOUND, except it has the same signature of DEFPARAMETER; this
-makes it particularly easy to make a symbol unbound by simply changing
-DEFPARAMETER into UNDEFVAR"
-    (declare (ignore val doc))
-    `(makunbound ',var))
+A mere wrapper around (setf (find-class class) nil), except it has the same
+signature of DEFCLASS; this makes it particularly easy to undefine a class by
+simply changing DEFCLASS into UNDEFCLASS"
+    (declare (ignore direct-superclasses direct-slots options))
+    `(setf (find-class ',class) nil))
   
 
   (defmacro undefconstant (name value &optional (doc nil))
@@ -1015,24 +990,15 @@ DEFCONSTANT into UNDEFVAR"
     `(makunbound ',var))
   
 
-  (defmacro undefpackage (name &rest options)
-    "Deletes `package` from all system data structures.
+  (defmacro undefmacro (name lambda-list &body body)
+    "Removes the function or macro definition, if any, of `name` in the global
+environment.
 
-Similar to DELETE-PACKAGE, except it has the same signature of DEFPACKAGE; this
-makes it particularly easy to delete a package by simply changing DEFPACKAGE
-into UNDEFPACKAGE"
-    (declare (ignore options))
-    `(delete-package ',name))
-  
-
-  (defmacro undefclass (class direct-superclasses direct-slots &rest options)
-    "Removes the association between `class` and its class object.
-
-A mere wrapper around (setf (find-class class) nil), except it has the same
-signature of DEFCLASS; this makes it particularly easy to undefine a class by
-simply changing DEFCLASS into UNDEFCLASS"
-    (declare (ignore direct-superclasses direct-slots options))
-    `(setf (find-class ',class) nil))
+Similar to FMAKUNBOUND, except it has the same signature of DEFUN; this makes
+it particularly easy to undefine a function or a macro by simply changing DEFUN
+into UNDEFUN and DEFMACRO into UNDEFMACRO"
+    (declare (ignore lamda-list body))
+    `(fmakunbound ',name))
   
 
   ;; https://groups.google.com/g/comp.lang.lisp/c/W6OrfjLhPJ8/m/txPfD-pPqPMJ
@@ -1062,6 +1028,47 @@ simply changing DEFMETHOD into UNDEFMETHOD"
              (parse-undefmethod-args ',args)
            (let ((meth (find-method fdefn qualifiers specializers)))
              (when meth (remove-method fdefn meth)))))))
+  
+
+  (defmacro undefpackage (name &rest options)
+    "Deletes `package` from all system data structures.
+
+Similar to DELETE-PACKAGE, except it has the same signature of DEFPACKAGE; this
+makes it particularly easy to delete a package by simply changing DEFPACKAGE
+into UNDEFPACKAGE"
+    (declare (ignore options))
+    `(delete-package ',name))
+  
+
+  (defmacro undefparameter (var val &optional (doc nil))
+    "Makes the symbol be unbound, regardless of whether it was previously bound.
+
+Similar to MAKUNBOUND, except it has the same signature of DEFPARAMETER; this
+makes it particularly easy to make a symbol unbound by simply changing
+DEFPARAMETER into UNDEFVAR"
+    (declare (ignore val doc))
+    `(makunbound ',var))
+  
+
+  (defmacro undefun (name lambda-list &body body)
+    "Removes the function or macro definition, if any, of `name` in the global
+environment.
+
+Similar to FMAKUNBOUND, except it has the same signature of DEFUN; this makes
+it particularly easy to undefine a function or a macro by simply changing DEFUN
+into UNDEFUN and DEFMACRO into UNDEFMACRO"
+    (declare (ignore lamda-list body))
+    `(fmakunbound ',name))
+  
+
+  (defmacro undefvar (var &optional (val nil) (doc nil))
+    "Makes the symbol be unbound, regardless of whether it was previously bound.
+
+Similar to MAKUNBOUND, except it has the same signature of DEFVAR; this makes
+it particularly easy to make a symbol unbound by simply changing DEFVAR into
+UNDEFVAR"
+    (declare (ignore val doc))
+    `(makunbound ',var))
   
 
   (defmacro until (expression &body body)
@@ -1305,15 +1312,6 @@ Examples:
     (first args))
   
 
-  (defmacro dbgl (&rest args)
-    "Print `args`, labeled, separated by a newline, and followed by a final
-newline.  Returns the last arg. labeled and readably."
-    `(prog1
-       (progn ,@(mapcar (lambda (arg) `(prs ',arg ,arg)) args))
-       (terpri)
-       (finish-output)))
-  
-
   (defun dbg (&rest args)
     "Print `args` to screen, separated by a space, and followed by a newline.
 Returns the first arg."
@@ -1322,16 +1320,25 @@ Returns the first arg."
     (finish-output)
     (first args))
   
+
+  (defmacro dbgl (&rest args)
+    "Print `args`, labeled, separated by a newline, and followed by a final
+newline.  Returns the last arg. labeled and readably."
+    `(prog1
+       (progn ,@(mapcar (lambda (arg) `(dbg ',arg ,arg)) args))
+       (terpri)
+       (finish-output)))
+  
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (export '(@ alist-keys alist-values appendf assoc-value rassoc-value bnd*
             bnd1 d-b dolists dorange dorangei doseq flet* fn if-let if-not iota
-            keep-if keep-if-not last-elt let1 looping m-v-b mklist once-only
-            plist-keys plist-values pmx range recursively split-sequence
-            split-sequence-if split-sequence-if-not string-ends-with-p
-            string-starts-with-p subdivide symb undefun undefmacro undefvar
-            undefparameter undefconstant undefpackage undefclass undefmethod
-            until w/gensyms w/slots when-let when-let* while with-gensyms
-            with-unique-names ~> ~>> aand awhen aif sprs sprn spr prs prn pr
-            dbgl dbg)))
+            keep-if keep-if-not last-elt let1 looping m-v-b make-keyword mklist
+            once-only plist-keys plist-values pmx range recursively split
+            split-sequence split-sequence-if split-sequence-if-not
+            string-ends-with-p string-starts-with-p subdivide symb undefclass
+            undefconstant undefmacro undefmethod undefpackage undefparameter
+            undefun undefvar until w/gensyms w/slots when-let when-let* while
+            with-gensyms with-unique-names ~> ~>> aand awhen aif sprs sprn spr
+            prs prn pr dbgl dbg)))
 
 ;;;; END OF mlutils.lisp ;;;;

@@ -34,6 +34,7 @@
                :let1
                :looping
                :m-v-b
+               :make-keyword
                :mklist
                :once-only
                :plist-keys
@@ -41,19 +42,20 @@
                :pmx
                :range
                :recursively
+               :split
                :split-sequence
                :string-ends-with-p
                :string-starts-with-p
                :subdivide
                :symb
-               :undefun
-               :undefmacro
-               :undefvar
-               :undefparameter
-               :undefconstant
-               :undefpackage
                :undefclass
+               :undefconstant
+               :undefmacro
                :undefmethod
+               :undefpackage
+               :undefparameter
+               :undefun
+               :undefvar
                :until
                :w/gensyms
                :w/slots
