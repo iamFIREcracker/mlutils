@@ -971,7 +971,7 @@ Similar to FMAKUNBOUND, except it has the same signature of DEFUN; this makes
 it particularly easy to undefine a function or a macro by simply changing DEFUN
 into UNDEFUN and DEFMACRO into UNDEFMACRO"
     (declare (ignore lamda-list body))
-    `(fmakunbound ,name))
+    `(fmakunbound ',name))
   
 
   (defmacro undefmacro (name lambda-list &body body)
@@ -982,7 +982,7 @@ Similar to FMAKUNBOUND, except it has the same signature of DEFUN; this makes
 it particularly easy to undefine a function or a macro by simply changing DEFUN
 into UNDEFUN and DEFMACRO into UNDEFMACRO"
     (declare (ignore lamda-list body))
-    `(fmakunbound ,name))
+    `(fmakunbound ',name))
   
 
   (defmacro undefvar (var &optional (val nil) (doc nil))
@@ -992,7 +992,7 @@ Similar to MAKUNBOUND, except it has the same signature of DEFVAR; this makes
 it particularly easy to make a symbol unbound by simply changing DEFVAR into
 UNDEFVAR"
     (declare (ignore val doc))
-    `(makunbound ,var))
+    `(makunbound ',var))
   
 
   (defmacro undefparameter (var val &optional (doc nil))
@@ -1002,7 +1002,7 @@ Similar to MAKUNBOUND, except it has the same signature of DEFPARAMETER; this
 makes it particularly easy to make a symbol unbound by simply changing
 DEFPARAMETER into UNDEFVAR"
     (declare (ignore val doc))
-    `(makunbound ,var))
+    `(makunbound ',var))
   
 
   (defmacro undefconstant (name value &optional (doc nil))
@@ -1012,7 +1012,7 @@ Similar to MAKUNBOUND, except it has the same signature of DEFCONSTANT; this
 makes it particularly easy to make a symbol unbound by simply changing
 DEFCONSTANT into UNDEFVAR"
     (declare (ignore val doc))
-    `(makunbound ,var))
+    `(makunbound ',var))
   
 
   (defmacro undefpackage (name &rest options)
@@ -1022,7 +1022,7 @@ Similar to DELETE-PACKAGE, except it has the same signature of DEFPACKAGE; this
 makes it particularly easy to delete a package by simply changing DEFPACKAGE
 into UNDEFPACKAGE"
     (declare (ignore options))
-    `(delete-package ,name))
+    `(delete-package ',name))
   
 
   (defmacro undefclass (class direct-superclasses direct-slots &rest options)
@@ -1032,7 +1032,7 @@ A mere wrapper around (setf (find-class class) nil), except it has the same
 signature of DEFCLASS; this makes it particularly easy to undefine a class by
 simply changing DEFCLASS into UNDEFCLASS"
     (declare (ignore direct-superclasses direct-slots options))
-    `(setf (find-class ,class) nil))
+    `(setf (find-class ',class) nil))
   
 
   ;; https://groups.google.com/g/comp.lang.lisp/c/W6OrfjLhPJ8/m/txPfD-pPqPMJ
