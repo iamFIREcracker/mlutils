@@ -2,7 +2,7 @@
 ;;;; See http://quickutil.org for details.
 
 ;;;; To regenerate:
-;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :ALIST-KEYS :ALIST-VALUES :APPENDF :ASSOC-VALUE :BND* :BND1 :D-B :DBG :DBGL :DOLISTS :DORANGE :DORANGEI :DOSEQ :DOSEQ :FLET* :FN :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LET1 :LOOPING :M-V-B :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX :RANGE :RECURSIVELY :SPLIT-SEQUENCE :STRING-ENDS-WITH-P :STRING-STARTS-WITH-P :SUBDIVIDE :SYMB :UNDEFUN :UNDEFMACRO :UNDEFVAR :UNDEFPARAMETER :UNDEFCONSTANT :UNDEFPACKAGE :UNDEFCLASS :UNDEFMETHOD :UNTIL :W/GENSYMS :W/SLOTS :WHEN-LET :WHILE :WITH-GENSYMS :~>) :categories '(:ANAPHORIC :PRINTING) :ensure-package T :package "MLUTILS")
+;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :ALIST-KEYS :ALIST-VALUES :APPENDF :ASSOC-VALUE :BND* :BND1 :D-B :DBG :DBGL :DOLISTS :DORANGE :DORANGEI :DOSEQ :DOSEQ :FLET* :FN :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LET1 :LOOPING :M-V-B :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX :RANGE :RECURSIVELY :SPLIT-SEQUENCE :STRING-ENDS-WITH-P :STRING-STARTS-WITH-P :SUBDIVIDE :SYMB :UNDEFUN :UNDEFMACRO :UNDEFVAR :UNDEFPARAMETER :UNDEFCONSTANT :UNDEFPACKAGE :UNDEFCLASS :UNDEFMETHOD :UNTIL :W/GENSYMS :W/SLOTS :WHEN-LET :WHILE :WITH-GENSYMS :~> :~>>) :categories '(:ANAPHORIC :PRINTING) :ensure-package T :package "MLUTILS")
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unless (find-package "MLUTILS")
@@ -33,8 +33,8 @@
                                          :UNDEFCONSTANT :UNDEFPACKAGE
                                          :UNDEFCLASS :UNDEFMETHOD :UNTIL
                                          :W/GENSYMS :W/SLOTS :WHEN-LET :WHILE
-                                         :~> :AAND :AWHEN :SPRS :SPRN :SPR :PRS
-                                         :PRN :PR :DBGL :DBG))))
+                                         :~> :~>> :AAND :AWHEN :SPRS :SPRN :SPR
+                                         :PRS :PRN :PR :DBGL :DBG))))
 
   (defmacro @ (x &rest places)
     ;;"XXX"
@@ -1144,30 +1144,82 @@ PROGN."
   (defmacro ~> (x &rest forms)
     "Threads the expr through the forms, like Clojure's `->`.
 
-  While threading, for each element of `forms`:
+While threading, for each element of `forms`:
 
-  - if a SYMBOL, it's converted into a LIST and the accumulated value is
-    appended to it
-  - if a LIST already, the accumulated value is appended to it unless the list
-    contains the placeholder '~ (in which case '~ is replaced with the
-    accumulated value)
+- if a SYMBOL, it's converted into a function call with the accumulated value
+as it's first argument
+- if a function call already, the accumulated value is **prepended** to the
+list of args unless it contains the placeholder '~ (in which case '~ is
+replaced with the accumulated value)
 
-  Examples:
-  (-> 'World
-    (list 'Hello))
-  =>
-  (HELLO WORLD)
+Examples:
 
-  (-> 'World
-    (list ~ 'Hello))
-  =>
-  (WORLD HELLO)
+(~> 'Hello
+  (list 'World))
+=>
+(HELLO WORLD)
 
-  (-> 'World
-    (list ~ 'Hello)
-    reverse)
-  =>
-  (HELLO WORLD)
+(~> 'Hello
+  (list 'World ~))
+=>
+(WORLD HELLO)
+
+(~> 'Hello
+  (list 'World ~)
+  reverse)
+=>
+(HELLO WORLD)
+  "
+    (labels ((replace-or-prepend (old form new)
+               (if (contains? old form)
+                 (subst new old form)
+                 (list* (car form) new (cdr form))))
+             (contains? (target form)
+               (recursively ((form form))
+                 (if (atom form)
+                   (eq form target)
+                   (or (recur (car form))
+                       (recur (cdr form)))))))
+      (let ((placeholder (intern "~")))
+        (with-gensyms (result)
+          `(let* ((,result ,x)
+                  ,@(mapcar (lambda (form)
+                              (if (atom form)
+                                `(,result (,form ,result))
+                                `(,result ,(replace-or-prepend placeholder
+                                                               form
+                                                               result))))
+                            forms))
+             ,result)))))
+  
+
+  (defmacro ~>> (x &rest forms)
+    "Threads the expr through the forms, like Clojure's `->>`.
+
+While threading, for each element of `forms`:
+
+- if a SYMBOL, it's converted into a function call with the accumulated value
+as it's first argument
+- if a function call already, the accumulated value is **appended** to the
+list of args unless it contains the placeholder '~ (in which case '~ is
+replaced with the accumulated value)
+
+Examples:
+(~>> 'World
+  (list 'Hello))
+=>
+(HELLO WORLD)
+
+(~>> 'World
+  (list ~ 'Hello))
+=>
+(HELLO WORLD)
+
+(~>> 'World
+  (list ~ 'Hello)
+  reverse)
+=>
+(HELLO WORLD)
   "
     (labels ((replace-or-append (old form new)
                (if (contains? old form)
@@ -1279,7 +1331,7 @@ Returns the first arg."
             string-starts-with-p subdivide symb undefun undefmacro undefvar
             undefparameter undefconstant undefpackage undefclass undefmethod
             until w/gensyms w/slots when-let when-let* while with-gensyms
-            with-unique-names ~> aand awhen aif sprs sprn spr prs prn pr dbgl
-            dbg)))
+            with-unique-names ~> ~>> aand awhen aif sprs sprn spr prs prn pr
+            dbgl dbg)))
 
 ;;;; END OF mlutils.lisp ;;;;
