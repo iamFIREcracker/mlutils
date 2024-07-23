@@ -797,7 +797,7 @@ In `body` the symbol `recur` will be bound to the function for recurring."
                  ,@body))
          (,(intern "RECUR") ,@values))))
   )                                        ; eval-when
-
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (defun split-from-end (position-fn sequence start end count remove-empty-subseqs)
     (loop
       :for right := end :then left
@@ -916,7 +916,7 @@ stopped."
           (split-from-start (lambda (sequence start)
                               (position-if-not predicate sequence :start start :key key))
                             sequence start end count remove-empty-subseqs))))
-  
+  )                                        ; eval-when
   (abbr split split-sequence)
 
   (defun string-ends-with-p (suffix s)
