@@ -2,7 +2,7 @@
 ;;;; See http://quickutil.org for details.
 
 ;;;; To regenerate:
-;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :ALIST-KEYS :ALIST-VALUES :APPENDF :ASSOC-VALUE :BND* :BND1 :D-B :DBG :DBGL :DOLISTS :DORANGE :DORANGEI :DOSEQ :DOSEQ :FLET* :FN :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LET1 :LOOPING :M-V-B :MAKE-KEYWORD :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX :RANGE :RECURSIVELY :SPLIT :SPLIT-SEQUENCE :STRING-ENDS-WITH-P :STRING-STARTS-WITH-P :SUBDIVIDE :SYMB :UNDEFCLASS :UNDEFCONSTANT :UNDEFMACRO :UNDEFMETHOD :UNDEFPACKAGE :UNDEFPARAMETER :UNDEFUN :UNDEFVAR :UNTIL :W/GENSYMS :W/SLOTS :WHEN-LET :WHILE :WITH-GENSYMS :~> :~>>) :categories '(:ANAPHORIC :PRINTING) :ensure-package T :package "MLUTILS")
+;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :AAND :AIF :ALIST-KEYS :ALIST-VALUES :APPENDF :APROG1 :ASSOC-VALUE :AWHEN :BND* :BND1 :CONTINUABLE :D-B :DBG :DBGL :DOLISTS :DORANGE :DORANGEI :DOSEQ :DOSEQ :FLET* :FN :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LET1 :LOOPING :M-V-B :MAKE-KEYWORD :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX :PR :PRN :PRS :RANGE :RECURSIVELY :RETRIABLE :SPLIT :SPLIT-SEQUENCE :SPR :SPRN :SPRS :STRING-ENDS-WITH-P :STRING-STARTS-WITH-P :SUBDIVIDE :SYMB :UNDEFCLASS :UNDEFCONSTANT :UNDEFMACRO :UNDEFMETHOD :UNDEFPACKAGE :UNDEFPARAMETER :UNDEFUN :UNDEFVAR :UNTIL :W/GENSYMS :W/SLOTS :WHEN-LET :WHILE :WITH-GENSYMS :~> :~>>) :ensure-package T :package "MLUTILS")
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unless (find-package "MLUTILS")
@@ -13,9 +13,11 @@
 (in-package "MLUTILS")
 
 (when (boundp '*utilities*)
-  (setf *utilities* (union *utilities* '(:@ :ALIST-KEYS :ALIST-VALUES :APPENDF
+  (setf *utilities* (union *utilities* '(:@ :LET1 :AIF :AAND :ALIST-KEYS
+                                         :ALIST-VALUES :APPENDF :APROG1
                                          :STRING-DESIGNATOR :WITH-GENSYMS
-                                         :ASSOC-VALUE :BND* :BND1 :ABBR :D-B
+                                         :ASSOC-VALUE :AWHEN :BND* :BND1
+                                         :CONTINUABLE :ABBR :D-B :DBG :DBGL
                                          :DOLISTS :DORANGE :DORANGEI
                                          :MAKE-GENSYM-LIST :ONCE-ONLY :DOSEQ
                                          :FLET* :FN :IF-LET :IF-NOT :IOTA
@@ -23,19 +25,19 @@
                                          :EMPTYP :SAFE-ENDP :CIRCULAR-LIST
                                          :PROPER-LIST-LENGTH/LAST-CAR
                                          :PROPER-LIST-P :PROPER-LIST
-                                         :PROPER-SEQUENCE :LAST-ELT :LET1 :AIF
-                                         :LOOPING :M-V-B :MAKE-KEYWORD :MKLIST
-                                         :PLIST-KEYS :PLIST-VALUES :PMX :RANGE
-                                         :RECURSIVELY :SPLIT-SEQUENCE :SPLIT
-                                         :STRING-ENDS-WITH-P
+                                         :PROPER-SEQUENCE :LAST-ELT :LOOPING
+                                         :M-V-B :MAKE-KEYWORD :MKLIST
+                                         :PLIST-KEYS :PLIST-VALUES :PMX :PR
+                                         :PRN :PRS :RANGE :RECURSIVELY
+                                         :RETRIABLE :SPLIT-SEQUENCE :SPLIT :SPR
+                                         :SPRN :SPRS :STRING-ENDS-WITH-P
                                          :STRING-STARTS-WITH-P :SUBDIVIDE
                                          :MKSTR :SYMB :UNDEFCLASS
                                          :UNDEFCONSTANT :UNDEFMACRO
                                          :UNDEFMETHOD :UNDEFPACKAGE
                                          :UNDEFPARAMETER :UNDEFUN :UNDEFVAR
                                          :UNTIL :W/GENSYMS :W/SLOTS :WHEN-LET
-                                         :WHILE :~> :~>> :AAND :AWHEN :SPRS
-                                         :SPRN :SPR :PRS :PRN :PR :DBG :DBGL))))
+                                         :WHILE :~> :~>>))))
 
   (defmacro @ (x &rest places)
     ;;"XXX"
@@ -74,6 +76,36 @@ If `x` is an ARRAY, this method will delegate to (SETF AREF).
     (:method (value (x array) subscript) (setf (aref x subscript) value)))
   
 
+  (defmacro let1 (var val &body body)
+    "Bind VAR to VAL within BODY. Equivalent to LET with one binding."
+    `(let ((,var ,val))
+       ,@body))
+  
+
+  (defmacro aif (test then &optional else)
+    "Like IF, except binds the result of `test` to IT (via LET) for the scope of `then` and `else` expressions."
+    (aif-expand test then else))
+
+  (eval-when (:compile-toplevel :load-toplevel :execute)
+    (defun aif-expand (test then &optional else)
+      (let1 it (intern "IT")
+        `(let1 ,it ,test
+           (if ,it ,then ,else)))))
+  
+
+  (defmacro aand (&rest forms)
+    "Like AND, except binds the result of each form to IT (via LET)."
+    (aand-expand forms))
+
+  (eval-when (:compile-toplevel :load-toplevel :execute)
+    (defun aand-expand (forms)
+      (cond ((not (car forms)) nil)
+            ((not (cdr forms)) (car forms))
+            (t (let1 car (car forms)
+                 `(aif ,car
+                    (aand ,@(cdr forms))))))))
+  
+
   (defun alist-keys (alist)
     "Return all the keys of `alist`."
     (mapcar #'car alist))
@@ -87,6 +119,21 @@ If `x` is an ARRAY, this method will delegate to (SETF AREF).
   (define-modify-macro appendf (&rest lists) append
     "Modify-macro for `append`. Appends `lists` to the place designated by the first
 argument.")
+  
+
+  (defmacro aprog1 (result-form &body body)
+    "Like PROG1, except binds the result of the `result-form` (i.e., the returned
+form) to IT (via LET) for the scope of `body`.
+
+Inspired by ActiveSupport: Object#returning
+https://weblog.jamisbuck.org/2006/10/27/mining-activesupport-object-returning.html"
+    (aprog1-expand result-form body))
+
+  (eval-when (:compile-toplevel :load-toplevel :execute)
+    (defun aprog1-expand (result-form body)
+      (let1 it (intern "IT")
+        `(let1 ,it ,result-form
+           ,@body))))
   
 
   (deftype string-designator ()
@@ -184,6 +231,18 @@ be used with SETF.")
 be used with SETF."))
   
 
+  (defmacro awhen (test &body body)
+    "Like WHEN, except binds the result of `test` to IT (via LET) for the scope of `body`."
+    (awhen-expand test body))
+
+  (eval-when (:compile-toplevel :load-toplevel :execute)
+    (defun awhen-expand (test body)
+      (let1 it (intern "IT")
+        `(let1 ,it ,test
+           (when ,it
+             ,@body)))))
+  
+
   (defmacro bnd* (bindings &body body)
     "Like LET*, but more powerful.
 
@@ -258,6 +317,38 @@ BND* will expand to a DESTRUCTURING-BIND call:
        ,@body))
   
 
+  (defmacro continuable (&body body)
+    "Wraps `body` in a RESTART-CASE with a CONTINUE restart. When invoked, the
+restart will simply return NIL, allowing the program to continue execution.
+
+Returns the value of the last form in body, or NIL if the CONTINUE restart is
+invoked.
+
+By default, the message reported by the restart case will be \"Continue.\".
+This can be overridden by providing a :report form as the first element of the
+body.
+
+Examples:
+
+  ;; Basic usage
+  (continuable
+    (format t \"This might fail~%\")
+    (/ 1 0))
+
+  ;; With custom report message
+  (continuable
+    (:report \"Ignore division by zero and continue\")
+    (format t \"This might fail~%\")
+    (/ 1 0))
+"
+    (let1 report "Continue."
+      (if (eq (caar body) :report)
+        (setf report (cadar body) body (nthcdr 2 body)))
+      `(restart-case
+         (progn ,@body)
+         (continue () :report ,report))))
+  
+
   (defmacro abbr (short long)
     "Defines a new function/macro named `short` and sharing
 FDEFINITION/MACRO-FUNCTION with `long`."
@@ -273,6 +364,24 @@ FDEFINITION/MACRO-FUNCTION with `long`."
            (error "Can't abbreviate ~a" ',long)))))
   
   (abbr d-b destructuring-bind)
+
+  (defun dbg (&rest args)
+    "Print `args` to screen, separated by a space, and followed by a newline.
+Returns the first arg."
+    (format t "~{~A~^ ~}" args)
+    (terpri)
+    (finish-output)
+    (first args))
+  
+
+  (defmacro dbgl (&rest args)
+    "Print `args`, labeled, separated by a newline, and followed by a final
+newline.  Returns the last arg. labeled and readably."
+    `(prog1
+       (progn ,@(mapcar (lambda (arg) `(dbg ',arg ,arg)) args))
+       (terpri)
+       (finish-output)))
+  
 
   (defmacro dolists (((var1 list1) (var2 list2) &rest var-list-specs) &body body)
     "Like DOLIST, except it allows you to iterate over multiple lists in parallel.
@@ -605,23 +714,6 @@ sequence, is an empty sequence, or if OBJECT cannot be stored in SEQUENCE."
                     :expected-type '(and proper-sequence (not (satisfies emptyp))))))))
   
 
-  (defmacro let1 (var val &body body)
-    "Bind VAR to VAL within BODY. Equivalent to LET with one binding."
-    `(let ((,var ,val))
-       ,@body))
-  
-
-  (defmacro aif (test then &optional else)
-    "Like IF, except binds the result of `test` to IT (via LET) for the scope of `then` and `else` expressions."
-    (aif-expand test then else))
-
-  (eval-when (:compile-toplevel :load-toplevel :execute)
-    (defun aif-expand (test then &optional else)
-      (let1 it (intern "IT")
-        `(let1 ,it ,test
-           (if ,it ,then ,else)))))
-  
-
   (defparameter *looping-reduce-keywords*  '(collect! append! adjoin! sum! multiply! count! minimize! maximize!))
 
   (defun %extract-reduce-keywords (body)
@@ -777,6 +869,27 @@ Examples:
     `(pprint (macroexpand-1 ',form)))
   
 
+  (defun pr (&rest args)
+    "Print `args` to screen. Returns the first arg."
+    (format t "~{~A~}" args)
+    (finish-output)
+    (first args))
+  
+
+  (defun prn (&rest args)
+    "Print `args` to screen, separated by a newline. Returns the first arg."
+    (format t "~{~A~^~%~}" args)
+    (finish-output)
+    (first args))
+  
+
+  (defun prs (&rest args)
+    "Print `args` to screen, separated by a space. Returns the first arg."
+    (format t "~{~A~^ ~}" args)
+    (finish-output)
+    (first args))
+  
+
   (defun range (start end &key (step 1) (key 'identity))
     "Return the list of numbers `n` such that `start <= n < end` and
 `n = start + k*step` for suitable integers `k`. If a function `key` is
@@ -797,6 +910,38 @@ In `body` the symbol `recur` will be bound to the function for recurring."
                  ,@body))
          (,(intern "RECUR") ,@values))))
   )                                        ; eval-when
+
+  (defmacro retriable (&body body)
+    "Wraps `body` in a RESTART-CASE with a RETRY restart. When invoked, the
+restart will re-execute the body forms until they return a non-NIL value.
+
+Returns the first non-NIL value returned by the body forms.
+
+By default, the message reported by the restart case will be \"Retry.\".  This
+can be overridden by providing a :report form as the first element of the
+body.
+
+Examples:
+
+  ;; Basic usage
+  (retriable
+    (let ((x (random 10)))
+      (when (> x 5)
+        x)))
+
+  ;; With custom report message
+  (retriable
+    (:report \"Try again to get a number greater than 5\")
+    (let ((x (random 10)))
+      (when (> x 5)
+        x)))
+"
+    (let1 report "Retry."
+      (if (eq (caar body) :report)
+        (setf report (cadar body) body (nthcdr 2 body)))
+      `(loop (with-simple-restart (retry ,report)
+               (return (progn ,@body))))))
+  
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun split-from-end (position-fn sequence start end count remove-empty-subseqs)
     (loop
@@ -918,6 +1063,21 @@ stopped."
                             sequence start end count remove-empty-subseqs))))
   )                                        ; eval-when
   (abbr split split-sequence)
+
+  (defun spr (&rest args)
+    "Print `args` into a string, and return it."
+    (format nil "~{~A~}" args))
+  
+
+  (defun sprn (&rest args)
+    "Print `args` into a string, separated by a newline, and return it."
+    (format nil "~{~A~^~%~}" args))
+  
+
+  (defun sprs (&rest args)
+    "Print `args` into a string, separated by a space, and return it."
+    (format nil "~{~A~^ ~}" args))
+  
 
   (defun string-ends-with-p (suffix s)
     "Returns T if the last few characters of `s` are equal to `suffix`."
@@ -1250,95 +1410,17 @@ Examples:
                             forms))
              ,result)))))
   
-
-  (defmacro aand (&rest forms)
-    "Like AND, except binds the result of each form to IT (via LET)."
-    (aand-expand forms))
-
-  (eval-when (:compile-toplevel :load-toplevel :execute)
-    (defun aand-expand (forms)
-      (cond ((not (car forms)) nil)
-            ((not (cdr forms)) (car forms))
-            (t (let1 car (car forms)
-                 `(aif ,car
-                    (aand ,@(cdr forms))))))))
-  
-
-  (defmacro awhen (test &body body)
-    "Like WHEN, except binds the result of `test` to IT (via LET) for the scope of `body`."
-    (awhen-expand test body))
-
-  (eval-when (:compile-toplevel :load-toplevel :execute)
-    (defun awhen-expand (test body)
-      (let1 it (intern "IT")
-        `(let1 ,it ,test
-           (when ,it
-             ,@body)))))
-  
-
-  (defun sprs (&rest args)
-    "Print `args` into a string, separated by a space, and return it."
-    (format nil "~{~A~^ ~}" args))
-  
-
-  (defun sprn (&rest args)
-    "Print `args` into a string, separated by a newline, and return it."
-    (format nil "~{~A~^~%~}" args))
-  
-
-  (defun spr (&rest args)
-    "Print `args` into a string, and return it."
-    (format nil "~{~A~}" args))
-  
-
-  (defun prs (&rest args)
-    "Print `args` to screen, separated by a space. Returns the first arg."
-    (format t "~{~A~^ ~}" args)
-    (finish-output)
-    (first args))
-  
-
-  (defun prn (&rest args)
-    "Print `args` to screen, separated by a newline. Returns the first arg."
-    (format t "~{~A~^~%~}" args)
-    (finish-output)
-    (first args))
-  
-
-  (defun pr (&rest args)
-    "Print `args` to screen. Returns the first arg."
-    (format t "~{~A~}" args)
-    (finish-output)
-    (first args))
-  
-
-  (defun dbg (&rest args)
-    "Print `args` to screen, separated by a space, and followed by a newline.
-Returns the first arg."
-    (format t "~{~A~^ ~}" args)
-    (terpri)
-    (finish-output)
-    (first args))
-  
-
-  (defmacro dbgl (&rest args)
-    "Print `args`, labeled, separated by a newline, and followed by a final
-newline.  Returns the last arg. labeled and readably."
-    `(prog1
-       (progn ,@(mapcar (lambda (arg) `(dbg ',arg ,arg)) args))
-       (terpri)
-       (finish-output)))
-  
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (export '(@ alist-keys alist-values appendf assoc-value rassoc-value bnd*
-            bnd1 d-b dolists dorange dorangei doseq flet* fn if-let if-not iota
-            keep-if keep-if-not last-elt let1 looping m-v-b make-keyword mklist
-            once-only plist-keys plist-values pmx range recursively split
-            split-sequence split-sequence-if split-sequence-if-not
-            string-ends-with-p string-starts-with-p subdivide symb undefclass
-            undefconstant undefmacro undefmethod undefpackage undefparameter
-            undefun undefvar until w/gensyms w/slots when-let when-let* while
-            with-gensyms with-unique-names ~> ~>> aand awhen aif sprs sprn spr
-            prs prn pr dbgl dbg)))
+  (export '(@ aand aif alist-keys alist-values appendf aprog1 assoc-value
+            rassoc-value awhen bnd* bnd1 continuable d-b dbg dbgl dolists
+            dorange dorangei doseq flet* fn if-let if-not iota keep-if
+            keep-if-not last-elt let1 looping m-v-b make-keyword mklist
+            once-only plist-keys plist-values pmx pr prn prs range recursively
+            retriable split split-sequence split-sequence-if
+            split-sequence-if-not spr sprn sprs string-ends-with-p
+            string-starts-with-p subdivide symb undefclass undefconstant
+            undefmacro undefmethod undefpackage undefparameter undefun undefvar
+            until w/gensyms w/slots when-let when-let* while with-gensyms
+            with-unique-names ~> ~>>)))
 
 ;;;; END OF mlutils.lisp ;;;;

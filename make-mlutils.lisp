@@ -9,12 +9,17 @@
   :utilities '(
 
                :@
+               :aand
+               :aif
                :alist-keys
                :alist-values
                :appendf
+               :aprog1
                :assoc-value
+               :awhen
                :bnd*
                :bnd1
+               :continuable
                :d-b
                :dbg
                :dbgl
@@ -40,10 +45,17 @@
                :plist-keys
                :plist-values
                :pmx
+               :pr
+               :prn
+               :prs
                :range
                :recursively
+               :retriable
                :split
                :split-sequence
+               :spr
+               :sprn
+               :sprs
                :string-ends-with-p
                :string-starts-with-p
                :subdivide
@@ -67,7 +79,6 @@
 
                )
 
-  :categories '(:anaphoric :printing)
   :package "MLUTILS")
 
 
