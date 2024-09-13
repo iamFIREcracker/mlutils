@@ -20,6 +20,7 @@
     (:merge :standard)
     (:macro-char #\[ #'opening-braket-reader)
     (:macro-char #\] (get-macro-character #\)))
-    (:dispatch-macro-char #\# #\; #'sharp-semicolon-reader))
+    (:dispatch-macro-char #\# #\; #'sharp-semicolon-reader)
+    (:macro-char #\" #'pythonic-string-reader::read-multiline-string t))
 
   )
