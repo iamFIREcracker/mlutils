@@ -1,83 +1,94 @@
 (pushnew '(merge-pathnames (parse-namestring "vendor/quickutil/quickutil-utilities/")
            *default-pathname-defaults*)
          asdf:*central-registry*)
+(pushnew (merge-pathnames (parse-namestring "vendor/mgl-pax/")
+                          *default-pathname-defaults*)
+         asdf:*central-registry*)
 
-(ql:quickload 'quickutil)
+(push (merge-pathnames (parse-namestring "vendor/")
+                       *default-pathname-defaults*)
+      ql:*local-project-directories*)
+
+
+(ql:quickload '(quickutil mgl-pax/document))
+
+(defparameter *utilities* '(
+
+                            (@ pax:macro)
+                            (aand pax:macro)
+                            (aif pax:macro)
+                            (alist-keys function)
+                            (alist-values function)
+                            (appendf pax:macro)
+                            (aprog1 pax:macro)
+                            (assoc-value function)
+                            (awhen pax:macro)
+                            (bnd* pax:macro)
+                            (bnd1 pax:macro)
+                            (continuable pax:macro)
+                            (d-b pax:macro)
+                            (dbg function)
+                            (dbgl pax:macro)
+                            (dolists pax:macro)
+                            (dorange pax:macro)
+                            (dorangei pax:macro)
+                            (doseq pax:macro)
+                            (flet* pax:macro)
+                            (fn pax:macro)
+                            (if-let pax:macro)
+                            (if-not pax:macro)
+                            (iota function)
+                            (keep-if function)
+                            (keep-if-not function)
+                            (last-elt function)
+                            (let1 pax:macro)
+                            (looping pax:macro)
+                            (m-v-b pax:macro)
+                            (make-keyword function)
+                            (mklist function)
+                            (once-only pax:macro)
+                            (plist-keys function)
+                            (plist-values function)
+                            (pmx pax:macro)
+                            (pr function)
+                            (prn function)
+                            (prs function)
+                            (range function)
+                            (recursively pax:macro)
+                            (retriable pax:macro)
+                            (split function)
+                            (split-sequence function)
+                            (spr function)
+                            (sprn function)
+                            (sprs function)
+                            (string-ends-with-p function)
+                            (string-starts-with-p function)
+                            (subdivide function)
+                            (symb function)
+                            (undefclass pax:macro)
+                            (undefconstant pax:macro)
+                            (undefmacro pax:macro)
+                            (undefmethod pax:macro)
+                            (undefpackage pax:macro)
+                            (undefparameter pax:macro)
+                            (undefun pax:macro)
+                            (undefvar pax:macro)
+                            (until pax:macro)
+                            (w/gensyms pax:macro)
+                            (w/slots pax:macro)
+                            (when-let pax:macro)
+                            (while pax:macro)
+                            (with-gensyms pax:macro)
+                            (~> pax:macro)
+                            (~>> pax:macro)
+
+                            ))
 
 (qtlc:save-utils-as
   "mlutils.lisp"
-  :utilities '(
-
-               :@
-               :aand
-               :aif
-               :alist-keys
-               :alist-values
-               :appendf
-               :aprog1
-               :assoc-value
-               :awhen
-               :bnd*
-               :bnd1
-               :continuable
-               :d-b
-               :dbg
-               :dbgl
-               :dolists
-               :dorange
-               :dorangei
-               :doseq
-               :doseq
-               :flet*
-               :fn
-               :if-let
-               :if-not
-               :iota
-               :keep-if
-               :keep-if-not
-               :last-elt
-               :let1
-               :looping
-               :m-v-b
-               :make-keyword
-               :mklist
-               :once-only
-               :plist-keys
-               :plist-values
-               :pmx
-               :pr
-               :prn
-               :prs
-               :range
-               :recursively
-               :retriable
-               :split
-               :split-sequence
-               :spr
-               :sprn
-               :sprs
-               :string-ends-with-p
-               :string-starts-with-p
-               :subdivide
-               :symb
-               :undefclass
-               :undefconstant
-               :undefmacro
-               :undefmethod
-               :undefpackage
-               :undefparameter
-               :undefun
-               :undefvar
-               :until
-               :w/gensyms
-               :w/slots
-               :when-let
-               :while
-               :with-gensyms
-               :~>
-               :~>>
-
-               )
+  :utilities (mapcar (lambda (xref)
+                       (intern (string-upcase (string (first xref))) :keyword))
+                     *utilities*)
 
   :package "MLUTILS")
 
@@ -99,3 +110,14 @@
   ;; undefined when compiling mlutils.lisp.  computers are trash.
   (prin1 '(defparameter *utilities* nil) outfile)
   )
+
+
+(with-open-file (outfile "mlutils-reference.lisp"
+                         :direction :output
+                         :if-exists :supersede)
+  (prin1 '(in-package "MLUTILS") outfile)
+  (terpri outfile)
+  (terpri outfile)
+  (prin1 `(pax:defsection @mlutils-reference (:title "Reference")
+            ,@*utilities*)
+         outfile))
