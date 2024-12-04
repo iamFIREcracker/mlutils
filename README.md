@@ -29,6 +29,10 @@ Personal list of utils to make Common Lisp feel a bit more like home
 
     Like [`IF`][02ad], except binds the result of `test` to IT (via [`LET`][4853]) for the scope of `then` and `else` expressions.
 
+<a id="x-28MLUTILS-3AALIST-20FUNCTION-29"></a>
+
+- [function] **ALIST** *KEY VALUE &REST KEY-VALUES*
+
 <a id="x-28MLUTILS-3AALIST-KEYS-20FUNCTION-29"></a>
 
 - [function] **ALIST-KEYS** *ALIST*
@@ -210,6 +214,12 @@ Personal list of utils to make Common Lisp feel a bit more like home
     Note: `DOSEQ` expands to a [`LOOP`][30e1] form, so `var` can either be a symbol, or a
     lambda-list
 
+<a id="x-28MLUTILS-3AENUMERATE-20GENERIC-FUNCTION-29"></a>
+
+- [generic-function] **ENUMERATE** *X &KEY START*
+
+    Equivalent to `(zip (iota (length x)) x)`.
+
 <a id="x-28MLUTILS-3AFLET-2A-20MGL-PAX-3AMACRO-29"></a>
 
 - [macro] **FLET\*** *&REST BODY*
@@ -221,9 +231,21 @@ Personal list of utils to make Common Lisp feel a bit more like home
 
 <a id="x-28MLUTILS-3AFN-20MGL-PAX-3AMACRO-29"></a>
 
-- [macro] **FN** *NAME LAMBDA-LIST &BODY BODY*
+- [macro] **FN** *LAMBDA-LIST &BODY BODY*
 
     Like `LAMBDA`([`0`][e400] [`1`][5c01]), but 4 characters shorter.
+
+<a id="x-28MLUTILS-3AHASH-TABLE-KEYS-20FUNCTION-29"></a>
+
+- [function] **HASH-TABLE-KEYS** *TABLE*
+
+    Returns a list containing the keys of hash table `table`.
+
+<a id="x-28MLUTILS-3AHASH-TABLE-VALUES-20FUNCTION-29"></a>
+
+- [function] **HASH-TABLE-VALUES** *TABLE*
+
+    Returns a list containing the values of hash table `table`.
 
 <a id="x-28MLUTILS-3AIF-LET-20MGL-PAX-3AMACRO-29"></a>
 
@@ -301,9 +323,9 @@ Personal list of utils to make Common Lisp feel a bit more like home
 - [macro] **LOOPING** *&BODY BODY*
 
     Run `body` in an environment where the symbols `COLLECT!`, `APPEND!`, `ADJOIN!`,
-    `SUM!`, `MULTIPLY!`, `COUNT!`, `MINIMIZE!`, and `MAXIMIZE!` are bound to functions that
-    can be used to collect / append, sum, multiply, count, minimize or maximize
-    things respectively.
+    `SUM!`, `MULTIPLY!`, `COUNT!`, `MINIMIZE!`, `MAXIMIZE!`, `ALWAYS!`, `NEVER!`, `THEREIS!`, and `SPR!` are
+    bound to functions that can be used to collect / append, sum, multiply, count,
+    minimize or maximize things respectively.
     
     Mixed usage of COLLECT!/APPEND!/ADJOIN!, `SUM!`, `MULTIPLY!`, `COUNT!`, `MINIMIZE!` and
     `MAXIMIZE!` is not supported.
@@ -392,7 +414,33 @@ Personal list of utils to make Common Lisp feel a bit more like home
 
 - [macro] **PMX** *FORM*
 
-    [`MACROEXPAND-1`][ac48] and then PRETTY-PRINT `form`.
+    [`MACROEXPAND-1`][ac48] `form` and then PRETTY-PRINT it.
+    
+    The macro utlimately expands into `form`; this makes it particularly convenient
+    to wrap an expression with this macro, and see what the expression expands to
+    without altering the original behavior.
+
+<a id="x-28MLUTILS-3APSX-20MGL-PAX-3AMACRO-29"></a>
+
+- [macro] **PSX** *FORM*
+
+    PRETTY-PRINT `form`.
+    
+    The macro utlimately expands into `form`; this makes it particularly convenient
+    to wrap a reader macro expression with this macro, and see what it expands to
+    without altering the original behavior.
+    
+    Examples:
+    
+    > (psx \[oddp \_\])
+    > ; (`LAMBDA`([`0`][e400] [`1`][5c01]) ([`&OPTIONAL`][4336] \_) ([`DECLARE`][1574] ([`IGNORABLE`][b491] \_)) ([`ODDP`][2257] \_))
+    
+    > # \<`FUNCTION`([`0`][119e] [`1`][81f7]) (`LAMBDA` (`&OPTIONAL` \_)) {B800F9678B}>
+    
+    > (mapcar (psx \[oddp \_\]) (list 1 2 3))
+    > ; (`LAMBDA` (`&OPTIONAL` \_) (`DECLARE` (`IGNORABLE` \_)) (`ODDP` \_))
+    > (`T` `NIL` `T`)
+
 
 <a id="x-28MLUTILS-3APR-20FUNCTION-29"></a>
 
@@ -429,6 +477,12 @@ Personal list of utils to make Common Lisp feel a bit more like home
     `bindings` should contain a list of symbols and (optional) starting values.
     
     In `body` the symbol `recur` will be bound to the function for recurring.
+
+<a id="x-28MLUTILS-3AREPEAT-20MGL-PAX-3AMACRO-29"></a>
+
+- [macro] **REPEAT** *N &BODY BODY*
+
+    Runs `BODY` `N` times.
 
 <a id="x-28MLUTILS-3ARETRIABLE-20MGL-PAX-3AMACRO-29"></a>
 
@@ -623,6 +677,19 @@ Personal list of utils to make Common Lisp feel a bit more like home
 
     Executes `body` until `expression` is true.
 
+<a id="x-28MLUTILS-3AVALUE-AT-20GENERIC-FUNCTION-29"></a>
+
+- [generic-function] **VALUE-AT** *X PLACE*
+
+    Returns the value of the place `place` inside `x`.  Also [`SETF`][a138]-able.
+    
+    If `x` is an [`STANDARD-OBJECT`][a843], this method will delegate to [`SLOT-VALUE`][5a85].
+    If `x` is a `LIST`([`0`][79d8] [`1`][6d9f]) and `place` is [`NUMBER`][4dee], this method will delegate to [`NTH`][1aa3].
+    If `x` is a `LIST` and `place` is `STRING`([`0`][b93c] [`1`][dae6]), this method will delegate to [`ASSOC-VALUE`][cb79].
+    If `x` is a `LIST` and `place` is [`SYMBOL`][e5af], this method will delegate to [`GETF`][104a].
+    If `x` is a [`HASH-TABLE`][7742], this method will delegate to [`GETHASH`][a6cc].
+    If `x` is an [`ARRAY`][1f99], this method will delegate to [`AREF`][e22b].
+
 <a id="x-28MLUTILS-3AW-2FGENSYMS-20MGL-PAX-3AMACRO-29"></a>
 
 - [macro] **W/GENSYMS** *NAMES &BODY FORMS*
@@ -762,29 +829,42 @@ Personal list of utils to make Common Lisp feel a bit more like home
   [0cc3]: http://www.lispworks.com/documentation/HyperSpec/Body/s_progn.htm "PROGN (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [0e59]: http://www.lispworks.com/documentation/HyperSpec/Body/f_gensym.htm "GENSYM (MGL-PAX:CLHS FUNCTION)"
   [1013]: http://www.lispworks.com/documentation/HyperSpec/Body/f_not.htm "NOT (MGL-PAX:CLHS FUNCTION)"
+  [104a]: http://www.lispworks.com/documentation/HyperSpec/Body/f_getf.htm "GETF (MGL-PAX:CLHS FUNCTION)"
+  [119e]: http://www.lispworks.com/documentation/HyperSpec/Body/t_fn.htm "FUNCTION (MGL-PAX:CLHS CLASS)"
   [14cb]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defmac.htm "DEFMACRO (MGL-PAX:CLHS MGL-PAX:MACRO)"
+  [1574]: http://www.lispworks.com/documentation/HyperSpec/Body/s_declar.htm "DECLARE (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [1867]: http://www.lispworks.com/documentation/HyperSpec/Body/r_contin.htm "CONTINUE (MGL-PAX:CLHS RESTART)"
+  [1aa3]: http://www.lispworks.com/documentation/HyperSpec/Body/f_nth.htm "NTH (MGL-PAX:CLHS FUNCTION)"
   [1bfd]: http://www.lispworks.com/documentation/HyperSpec/Body/m_dolist.htm "DOLIST (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [1d5a]: http://www.lispworks.com/documentation/HyperSpec/Body/t_pkg.htm "PACKAGE (MGL-PAX:CLHS CLASS)"
+  [1f99]: http://www.lispworks.com/documentation/HyperSpec/Body/t_array.htm "ARRAY (MGL-PAX:CLHS CLASS)"
   [2053]: http://www.lispworks.com/documentation/HyperSpec/Body/m_prog1c.htm "PROG1 (MGL-PAX:CLHS MGL-PAX:MACRO)"
+  [2257]: http://www.lispworks.com/documentation/HyperSpec/Body/f_evenpc.htm "ODDP (MGL-PAX:CLHS FUNCTION)"
   [30e1]: http://www.lispworks.com/documentation/HyperSpec/Body/m_loop.htm "LOOP (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [329a]: http://www.lispworks.com/documentation/HyperSpec/Body/f_del_pk.htm "DELETE-PACKAGE (MGL-PAX:CLHS FUNCTION)"
   [35b1]: http://www.lispworks.com/documentation/HyperSpec/Body/f_makunb.htm "MAKUNBOUND (MGL-PAX:CLHS FUNCTION)"
   [35ba]: http://www.lispworks.com/documentation/HyperSpec/Body/f_error.htm "ERROR (MGL-PAX:CLHS FUNCTION)"
   [425d]: http://www.lispworks.com/documentation/HyperSpec/Body/m_and.htm "AND (MGL-PAX:CLHS MGL-PAX:MACRO)"
+  [4336]: http://www.lispworks.com/documentation/HyperSpec/Body/03_da.htm '"3.4.1" (MGL-PAX:CLHS MGL-PAX:SECTION)'
   [44b5]: #x-28MLUTILS-3A-40MLUTILS-REFERENCE-20MGL-PAX-3ASECTION-29 "Reference"
   [4853]: http://www.lispworks.com/documentation/HyperSpec/Body/s_let_l.htm "LET (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [49f5]: http://www.lispworks.com/documentation/HyperSpec/Body/s_let_l.htm "LET* (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [4a86]: http://www.lispworks.com/documentation/HyperSpec/Body/f_subseq.htm "SUBSEQ (MGL-PAX:CLHS FUNCTION)"
+  [4dee]: http://www.lispworks.com/documentation/HyperSpec/Body/t_number.htm "NUMBER (MGL-PAX:CLHS CLASS)"
   [570e]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defpar.htm "DEFPARAMETER (MGL-PAX:CLHS MGL-PAX:MACRO)"
+  [5a85]: http://www.lispworks.com/documentation/HyperSpec/Body/f_slt_va.htm "SLOT-VALUE (MGL-PAX:CLHS FUNCTION)"
   [5b0b]: http://www.lispworks.com/documentation/HyperSpec/Body/m_return.htm "RETURN (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [5c01]: http://www.lispworks.com/documentation/HyperSpec/Body/m_lambda.htm "LAMBDA (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [609c]: http://www.lispworks.com/documentation/HyperSpec/Body/f_fmakun.htm "FMAKUNBOUND (MGL-PAX:CLHS FUNCTION)"
   [625d]: http://www.lispworks.com/documentation/HyperSpec/Body/m_multip.htm "MULTIPLE-VALUE-BIND (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [6428]: #x-28MLUTILS-3ADORANGE-20MGL-PAX-3AMACRO-29 "MLUTILS:DORANGE MGL-PAX:MACRO"
   [6832]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defmet.htm "DEFMETHOD (MGL-PAX:CLHS MGL-PAX:MACRO)"
+  [6d9f]: http://www.lispworks.com/documentation/HyperSpec/Body/f_list_.htm "LIST (MGL-PAX:CLHS FUNCTION)"
   [7334]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defpar.htm "DEFVAR (MGL-PAX:CLHS MGL-PAX:MACRO)"
+  [7742]: http://www.lispworks.com/documentation/HyperSpec/Body/t_hash_t.htm "HASH-TABLE (MGL-PAX:CLHS CLASS)"
+  [79d8]: http://www.lispworks.com/documentation/HyperSpec/Body/t_list.htm "LIST (MGL-PAX:CLHS CLASS)"
   [7de6]: http://www.lispworks.com/documentation/HyperSpec/Body/m_w_slts.htm "WITH-SLOTS (MGL-PAX:CLHS MGL-PAX:MACRO)"
+  [81f7]: http://www.lispworks.com/documentation/HyperSpec/Body/s_fn.htm "FUNCTION (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [87a5]: #x-28MLUTILS-3AUNDEFVAR-20MGL-PAX-3AMACRO-29 "MLUTILS:UNDEFVAR MGL-PAX:MACRO"
   [8934]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defcon.htm "DEFCONSTANT (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [8b63]: #x-28MLUTILS-3ALET1-20MGL-PAX-3AMACRO-29 "MLUTILS:LET1 MGL-PAX:MACRO"
@@ -792,14 +872,21 @@ Personal list of utils to make Common Lisp feel a bit more like home
   [9b43]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defpkg.htm "DEFPACKAGE (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [a138]: http://www.lispworks.com/documentation/HyperSpec/Body/m_setf_.htm "SETF (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [a458]: http://www.lispworks.com/documentation/HyperSpec/Body/m_rst_ca.htm "RESTART-CASE (MGL-PAX:CLHS MGL-PAX:MACRO)"
+  [a6cc]: http://www.lispworks.com/documentation/HyperSpec/Body/f_gethas.htm "GETHASH (MGL-PAX:CLHS FUNCTION)"
+  [a843]: http://www.lispworks.com/documentation/HyperSpec/Body/t_std_ob.htm "STANDARD-OBJECT (MGL-PAX:CLHS CLASS)"
   [ac48]: http://www.lispworks.com/documentation/HyperSpec/Body/f_mexp_.htm "MACROEXPAND-1 (MGL-PAX:CLHS FUNCTION)"
   [b105]: http://www.lispworks.com/documentation/HyperSpec/Body/m_destru.htm "DESTRUCTURING-BIND (MGL-PAX:CLHS MGL-PAX:MACRO)"
+  [b491]: http://www.lispworks.com/documentation/HyperSpec/Body/d_ignore.htm "IGNORABLE (MGL-PAX:CLHS DECLARATION)"
+  [b93c]: http://www.lispworks.com/documentation/HyperSpec/Body/t_string.htm "STRING (MGL-PAX:CLHS CLASS)"
   [baaf]: http://www.lispworks.com/documentation/HyperSpec/Body/m_when_.htm "WHEN (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [c2ef]: http://www.lispworks.com/documentation/HyperSpec/Body/s_flet_.htm "LABELS (MGL-PAX:CLHS MGL-PAX:MACRO)"
+  [cb79]: #x-28MLUTILS-3AASSOC-VALUE-20FUNCTION-29 "MLUTILS:ASSOC-VALUE FUNCTION"
   [d162]: http://www.lispworks.com/documentation/HyperSpec/Body/e_error.htm "ERROR (MGL-PAX:CLHS CONDITION)"
   [d5a2]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CAR (MGL-PAX:CLHS FUNCTION)"
   [d675]: http://www.lispworks.com/documentation/HyperSpec/Body/f_append.htm "APPEND (MGL-PAX:CLHS FUNCTION)"
+  [dae6]: http://www.lispworks.com/documentation/HyperSpec/Body/f_string.htm "STRING (MGL-PAX:CLHS FUNCTION)"
   [dd55]: http://www.lispworks.com/documentation/HyperSpec/Body/t_and.htm "AND (MGL-PAX:CLHS TYPE)"
+  [e22b]: http://www.lispworks.com/documentation/HyperSpec/Body/f_aref.htm "AREF (MGL-PAX:CLHS FUNCTION)"
   [e400]: http://www.lispworks.com/documentation/HyperSpec/Body/s_lambda.htm '"s_lambda" (MGL-PAX:CLHS MGL-PAX:SECTION)'
   [e5af]: http://www.lispworks.com/documentation/HyperSpec/Body/t_symbol.htm "SYMBOL (MGL-PAX:CLHS CLASS)"
   [e5fc]: http://www.lispworks.com/documentation/HyperSpec/Body/f_assocc.htm "ASSOC (MGL-PAX:CLHS FUNCTION)"

@@ -1,10 +1,10 @@
+;; not on quicklisp yet -- 6bfd77ddfa79f0e0905eb4b99d46ac5d2dd69c24
 (pushnew (merge-pathnames (parse-namestring "vendor/mgl-pax/")
                           *default-pathname-defaults*)
          asdf:*central-registry*)
-
-(push (merge-pathnames (parse-namestring "vendor/")
-                       *default-pathname-defaults*)
-      ql:*local-project-directories*)
+#+#:excluded (push (merge-pathnames (parse-namestring "vendor/")
+                                    *default-pathname-defaults*)
+                   ql:*local-project-directories*)
 
 ;;; See MLUTILS::@MLUTILS-MANUAL for the user guide.
 (asdf:defsystem #:net.matteolandi.utils
@@ -12,9 +12,10 @@
   :license  "MIT"
   :serial t
   :depends-on (
-                 #:assoc-utils
+
+                 #:cl-dotenv
                  #:named-readtables
-                 #:pythonic-string-reader
+                 ; #:pythonic-string-reader
 
                  #:mgl-pax/document
                )

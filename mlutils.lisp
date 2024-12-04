@@ -2,7 +2,7 @@
 ;;;; See http://quickutil.org for details.
 
 ;;;; To regenerate:
-;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :AAND :AIF :ALIST-KEYS :ALIST-VALUES :APPENDF :APROG1 :ASSOC-VALUE :AWHEN :BND* :BND1 :CONTINUABLE :D-B :DBG :DBGL :DOLISTS :DORANGE :DORANGEI :DOSEQ :FLET* :FN :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LET1 :LOOPING :M-V-B :MAKE-KEYWORD :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX :PR :PRN :PRS :RANGE :RECURSIVELY :RETRIABLE :SPLIT :SPLIT-SEQUENCE :SPR :SPRN :SPRS :STRING-ENDS-WITH-P :STRING-STARTS-WITH-P :SUBDIVIDE :SYMB :UNDEFCLASS :UNDEFCONSTANT :UNDEFMACRO :UNDEFMETHOD :UNDEFPACKAGE :UNDEFPARAMETER :UNDEFUN :UNDEFVAR :UNTIL :W/GENSYMS :W/SLOTS :WHEN-LET :WHILE :WITH-GENSYMS :~> :~>>) :ensure-package T :package "MLUTILS")
+;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :AAND :AIF :ALIST :ALIST-KEYS :ALIST-VALUES :APPENDF :APROG1 :ASSOC-VALUE :AWHEN :BND* :BND1 :CONTINUABLE :D-B :DBG :DBGL :DOLISTS :DORANGE :DORANGEI :DOSEQ :ENUMERATE :FLET* :FN :HASH-TABLE-KEYS :HASH-TABLE-VALUES :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LET1 :LOOPING :M-V-B :MAKE-KEYWORD :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX :PSX :PR :PRN :PRS :RANGE :RECURSIVELY :REPEAT :RETRIABLE :SPLIT :SPLIT-SEQUENCE :SPR :SPRN :SPRS :STRING-ENDS-WITH-P :STRING-STARTS-WITH-P :SUBDIVIDE :SYMB :UNDEFCLASS :UNDEFCONSTANT :UNDEFMACRO :UNDEFMETHOD :UNDEFPACKAGE :UNDEFPARAMETER :UNDEFUN :UNDEFVAR :UNTIL :VALUE-AT :W/GENSYMS :W/SLOTS :WHEN-LET :WHILE :WITH-GENSYMS :~> :~>>) :ensure-package T :package "MLUTILS")
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unless (find-package "MLUTILS")
@@ -13,24 +13,28 @@
 (in-package "MLUTILS")
 
 (when (boundp '*utilities*)
-  (setf *utilities* (union *utilities* '(:@ :LET1 :AIF :AAND :ALIST-KEYS
-                                         :ALIST-VALUES :APPENDF :APROG1
-                                         :STRING-DESIGNATOR :WITH-GENSYMS
-                                         :ASSOC-VALUE :AWHEN :BND* :BND1
+  (setf *utilities* (union *utilities* '(:STRING-DESIGNATOR :WITH-GENSYMS
+                                         :ASSOC-VALUE :VALUE-AT :@ :LET1 :AIF
+                                         :AAND :ALIST :ALIST-KEYS :ALIST-VALUES
+                                         :APPENDF :APROG1 :AWHEN :BND* :BND1
                                          :CONTINUABLE :ABBR :D-B :DBG :DBGL
                                          :DOLISTS :DORANGE :DORANGEI
                                          :MAKE-GENSYM-LIST :ONCE-ONLY :DOSEQ
-                                         :FLET* :FN :IF-LET :IF-NOT :IOTA
-                                         :KEEP-IF :KEEP-IF-NOT :NON-ZERO-P
-                                         :EMPTYP :SAFE-ENDP :CIRCULAR-LIST
+                                         :ENUMERATE :FLET* :FN :MAPHASH-KEYS
+                                         :HASH-TABLE-KEYS :MAPHASH-VALUES
+                                         :HASH-TABLE-VALUES :IF-LET :IF-NOT
+                                         :IOTA :KEEP-IF :KEEP-IF-NOT
+                                         :NON-ZERO-P :EMPTYP :SAFE-ENDP
+                                         :CIRCULAR-LIST
                                          :PROPER-LIST-LENGTH/LAST-CAR
                                          :PROPER-LIST-P :PROPER-LIST
                                          :PROPER-SEQUENCE :LAST-ELT :LOOPING
                                          :M-V-B :MAKE-KEYWORD :MKLIST
-                                         :PLIST-KEYS :PLIST-VALUES :PMX :PR
-                                         :PRN :PRS :RANGE :RECURSIVELY
-                                         :RETRIABLE :SPLIT-SEQUENCE :SPLIT :SPR
-                                         :SPRN :SPRS :STRING-ENDS-WITH-P
+                                         :PLIST-KEYS :PLIST-VALUES :PMX :PSX
+                                         :PR :PRN :PRS :RANGE :RECURSIVELY
+                                         :REPEAT :RETRIABLE :SPLIT-SEQUENCE
+                                         :SPLIT :SPR :SPRN :SPRS
+                                         :STRING-ENDS-WITH-P
                                          :STRING-STARTS-WITH-P :SUBDIVIDE
                                          :MKSTR :SYMB :UNDEFCLASS
                                          :UNDEFCONSTANT :UNDEFMACRO
@@ -38,103 +42,6 @@
                                          :UNDEFPARAMETER :UNDEFUN :UNDEFVAR
                                          :UNTIL :W/GENSYMS :W/SLOTS :WHEN-LET
                                          :WHILE :~> :~>>))))
-
-  (defmacro @ (x &rest places)
-    ;;"XXX"
-    (setf places (reverse places))
-    (labels ((recur (places)
-               (if (not (cdr places))
-                 `(@1 ,x ,(first places))
-                 `(@1 ,(recur (cdr places))
-                    ',(first places)))))
-      (recur places)))
-
-  (defgeneric value-at (x place)
-    (:documentation "Returns the value of the place `place` inside `x`.  Also SETF-able.
-
-If `x` is an STANDARD-OBJECT, this method will delegate to SLOT-VALUE.
-If `x` is a LIST, this method will delegate to NTH.
-If `x` is a HASH-TABLE, this method will delegate to GETHASH.
-If `x` is an ARRAY, this method will delegate to AREF.
-")
-    (:method ((x standard-object) slot)  (slot-value x slot))
-    (:method ((x list) n)  (nth n x))
-    (:method ((x hash-table) key)  (gethash key x))
-    (:method ((x array) subscript) (aref x subscript)))
-
-  (defgeneric (setf value-at) (value x place)
-    (:documentation "Sets place `place` of `x` to `value`.
-
-If `x` is an STANDARD-OBJECT, this method will delegate to (SETF SLOT-VALUE).
-If `x` is a LIST, this method will delegate to (SETF NTH).
-If `x` is a HASH-TABLE, this method will delegate to (SETF GETHASH).
-If `x` is an ARRAY, this method will delegate to (SETF AREF).
-")
-    (:method (value (x standard-object) slot)  (setf (slot-value x slot) value))
-    (:method (value (x list) n)  (setf (nth n x) value))
-    (:method (value (x hash-table) key)  (setf (gethash key x) value))
-    (:method (value (x array) subscript) (setf (aref x subscript) value)))
-  
-
-  (defmacro let1 (var val &body body)
-    "Bind VAR to VAL within BODY. Equivalent to LET with one binding."
-    `(let ((,var ,val))
-       ,@body))
-  
-
-  (defmacro aif (test then &optional else)
-    "Like IF, except binds the result of `test` to IT (via LET) for the scope of `then` and `else` expressions."
-    (aif-expand test then else))
-
-  (eval-when (:compile-toplevel :load-toplevel :execute)
-    (defun aif-expand (test then &optional else)
-      (let1 it (intern "IT")
-        `(let1 ,it ,test
-           (if ,it ,then ,else)))))
-  
-
-  (defmacro aand (&rest forms)
-    "Like AND, except binds the result of each form to IT (via LET)."
-    (aand-expand forms))
-
-  (eval-when (:compile-toplevel :load-toplevel :execute)
-    (defun aand-expand (forms)
-      (cond ((not (car forms)) nil)
-            ((not (cdr forms)) (car forms))
-            (t (let1 car (car forms)
-                 `(aif ,car
-                    (aand ,@(cdr forms))))))))
-  
-
-  (defun alist-keys (alist)
-    "Return all the keys of `alist`."
-    (mapcar #'car alist))
-  
-
-  (defun alist-values (alist)
-    "Return all the values of `alist`."
-    (mapcar #'cdr alist))
-  
-
-  (define-modify-macro appendf (&rest lists) append
-    "Modify-macro for `append`. Appends `lists` to the place designated by the first
-argument.")
-  
-
-  (defmacro aprog1 (result-form &body body)
-    "Like PROG1, except binds the result of the `result-form` (i.e., the returned
-form) to IT (via LET) for the scope of `body`.
-
-Inspired by ActiveSupport: Object#returning
-https://weblog.jamisbuck.org/2006/10/27/mining-activesupport-object-returning.html"
-    (aprog1-expand result-form body))
-
-  (eval-when (:compile-toplevel :load-toplevel :execute)
-    (defun aprog1-expand (result-form body)
-      (let1 it (intern "IT")
-        `(let1 ,it ,result-form
-           ,@body))))
-  
 
   (deftype string-designator ()
     "A string designator type. A string designator is either a string, a symbol,
@@ -229,6 +136,112 @@ be used with SETF.")
     (define-alist-get rassoc-value rassoc car racons
       "RASSOC-VALUE is an alist accessor very much like RASSOC, but it can
 be used with SETF."))
+  
+
+  (defgeneric value-at (x place)
+    (:documentation "Returns the value of the place `place` inside `x`.  Also SETF-able.
+
+If `x` is an STANDARD-OBJECT, this method will delegate to SLOT-VALUE.
+If `x` is a LIST and `place` is NUMBER, this method will delegate to NTH.
+If `x` is a LIST and `place` is STRING, this method will delegate to ASSOC-VALUE.
+If `x` is a LIST and `place` is SYMBOL, this method will delegate to GETF.
+If `x` is a HASH-TABLE, this method will delegate to GETHASH.
+If `x` is an ARRAY, this method will delegate to AREF.
+")
+    (:method ((x standard-object) slot)  (slot-value x slot))
+    (:method ((x list) (n number))  (nth n x))
+    (:method ((x list) (key string))  (assoc-value x key))
+    (:method ((x list) (prop symbol))  (getf x prop))
+    (:method ((x hash-table) key)  (gethash key x))
+    ;; FIXME: add support for multiple subscripts
+    (:method ((x array) subscript) (aref x subscript)))
+
+  (defgeneric (setf value-at) (value x place)
+    (:method (value (x standard-object) slot)  (setf (slot-value x slot) value))
+    (:method (value (x list) (n number))  (setf (nth n x) value))
+    (:method (value (x list) (key string))  (setf (assoc-value x key) value))
+    (:method (value (x list) (prop symbol))  (setf (getf x prop) value))
+    (:method (value (x hash-table) key)  (setf (gethash key x) value))
+    ;; FIXME: add support for multiple subscripts
+    (:method (value (x array) subscript) (setf (aref x subscript) value)))
+  
+
+  (defmacro @ (x &rest places)
+    ;;"XXX"
+    (setf places (reverse places))
+    (labels ((recur (places)
+               (if (not (cdr places))
+                 `(value-at ,x ,(first places))
+                 `(value-at ,(recur (cdr places))
+                    ',(first places)))))
+      (recur places)))
+  
+
+  (defmacro let1 (var val &body body)
+    "Bind VAR to VAL within BODY. Equivalent to LET with one binding."
+    `(let ((,var ,val))
+       ,@body))
+  
+
+  (defmacro aif (test then &optional else)
+    "Like IF, except binds the result of `test` to IT (via LET) for the scope of `then` and `else` expressions."
+    (aif-expand test then else))
+
+  (eval-when (:compile-toplevel :load-toplevel :execute)
+    (defun aif-expand (test then &optional else)
+      (let1 it (intern "IT")
+        `(let1 ,it ,test
+           (if ,it ,then ,else)))))
+  
+
+  (defmacro aand (&rest forms)
+    "Like AND, except binds the result of each form to IT (via LET)."
+    (aand-expand forms))
+
+  (eval-when (:compile-toplevel :load-toplevel :execute)
+    (defun aand-expand (forms)
+      (cond ((not (car forms)) nil)
+            ((not (cdr forms)) (car forms))
+            (t (let1 car (car forms)
+                 `(aif ,car
+                    (aand ,@(cdr forms))))))))
+  
+
+  (defun alist (key value &rest key-values)
+    (list* (cons key value)
+           (loop :for (key value) :on key-values :by #'cddr
+                 :collect (cons key value))))
+  
+
+  (defun alist-keys (alist)
+    "Return all the keys of `alist`."
+    (mapcar #'car alist))
+  
+
+  (defun alist-values (alist)
+    "Return all the values of `alist`."
+    (mapcar #'cdr alist))
+  
+
+  (define-modify-macro appendf (&rest lists) append
+    "Modify-macro for `append`. Appends `lists` to the place designated by the first
+argument.")
+  
+
+  (defmacro aprog1 (result-form &body body)
+    "Like PROG1, except binds the result of the `result-form` (i.e., the returned
+form) to IT (via LET) for the scope of `body`.
+
+Inspired by ActiveSupport: Object#returning
+https://weblog.jamisbuck.org/2006/10/27/mining-activesupport-object-returning.html"
+    (aprog1-expand result-form body))
+
+  (eval-when (:compile-toplevel :load-toplevel :execute)
+    (defun aprog1-expand (result-form body)
+      (let1 it (intern "IT")
+        `(let1 ,it ,result-form
+           ,@body
+           ,it))))
   
 
   (defmacro awhen (test &body body)
@@ -341,12 +354,12 @@ Examples:
     (format t \"This might fail~%\")
     (/ 1 0))
 "
-    (let1 report "Continue."
+    (let1 report-args (list "Continue.")
       (if (eq (caar body) :report)
-        (setf report (cadar body) body (nthcdr 2 body)))
+        (setf report-args (cdar body) body (cdr body)))
       `(restart-case
          (progn ,@body)
-         (continue () :report ,report))))
+         (continue () :report ,@report-args))))
   
 
   (defmacro abbr (short long)
@@ -489,6 +502,24 @@ lambda-list
          (sequence (loop :for ,var :across ,seq :do ,@body ,@(when result? `(:finally (return ,result))))))))
   
 
+  (defgeneric enumerate (x &key start)
+    (:documentation "Equivalent to `(zip (iota (length x)) x)`."))
+
+  (defmethod enumerate ((x list) &key (start 0))
+    "Equivalent to `(zip (iota (length x)) x)`."
+    (loop
+      :for i :in x
+      :for j :from start
+      :collect (list j i)))
+
+  (defmethod enumerate ((x array) &key (start 0))
+    "Equivalent to `(zip (iota (length x)) x)`."
+    (loop
+      :for i :across x
+      :for j :from start
+      :collect (list j i)))
+  
+
   (defmacro flet* (&rest body)
     "Like LABELS, but 1 character shorter.
 Also, FLET* is to FLET what LET* is to LET.
@@ -497,9 +528,45 @@ Note: cannot use ABBR for this, because LABELS is a special operator."
     `(labels ,@body))
   
 
-  (defmacro fn (name lambda-list &body body)
+  (defmacro fn (lambda-list &body body)
     "Like LAMBDA, but 4 characters shorter."
-    `(lambda ,name ,lambda-list ,@body))
+    `(lambda ,lambda-list ,@body))
+  
+
+  (declaim (inline maphash-keys))
+  (defun maphash-keys (function table)
+    "Like `maphash`, but calls `function` with each key in the hash table `table`."
+    (maphash (lambda (k v)
+               (declare (ignore v))
+               (funcall function k))
+             table))
+  
+
+  (defun hash-table-keys (table)
+    "Returns a list containing the keys of hash table `table`."
+    (let ((keys nil))
+      (maphash-keys (lambda (k)
+                      (push k keys))
+                    table)
+      keys))
+  
+
+  (declaim (inline maphash-values))
+  (defun maphash-values (function table)
+    "Like `maphash`, but calls `function` with each value in the hash table `table`."
+    (maphash (lambda (k v)
+               (declare (ignore k))
+               (funcall function v))
+             table))
+  
+
+  (defun hash-table-values (table)
+    "Returns a list containing the values of hash table `table`."
+    (let ((values nil))
+      (maphash-values (lambda (v)
+                        (push v values))
+                      table)
+      values))
   
 
   (defmacro if-let (bindings &body (then-form &optional else-form))
@@ -714,7 +781,15 @@ sequence, is an empty sequence, or if OBJECT cannot be stored in SEQUENCE."
                     :expected-type '(and proper-sequence (not (satisfies emptyp))))))))
   
 
-  (defparameter *looping-reduce-keywords*  '(collect! append! adjoin! sum! multiply! count! minimize! maximize!))
+  (defparameter *looping-reduce-keywords*  '(collect! append! adjoin!
+                                             sum! multiply!
+                                             count!
+                                             minimize!
+                                             maximize!
+                                             always!
+                                             never!
+                                             thereis!
+                                             spr!))
 
   (defun %extract-reduce-keywords (body)
     "Walk `body` and collect any symbol that matches any of the keywords inside
@@ -745,8 +820,16 @@ E.g. COLLECT! is compatible with APPEND!, or ADJOIN!, but not with SUM!"
                          (error "Cannot use ~A together with ~A" it k)))
                (minimize! (aif (find 'minimize! rest :test-not 'eq)
                             (error "Cannot use ~A together with ~A" it k)))
-               (maximize! (aif (find 'minimize! rest :test-not 'eq)
-                            (error "Cannot use ~A together with ~A" it k))))))
+               (maximize! (aif (find 'maximize! rest :test-not 'eq)
+                            (error "Cannot use ~A together with ~A" it k)))
+               (always! (aif (find 'always! rest :test-not 'eq)
+                          (error "Cannot use ~A together with ~A" it k)))
+               (never! (aif (find 'never! rest :test-not 'eq)
+                         (error "Cannot use ~A together with ~A" it k)))
+               (thereis! (aif (find 'thereis! rest :test-not 'eq)
+                           (error "Cannot use ~A together with ~A" it k)))
+               (spr! (aif (find 'spr! rest :test-not 'eq)
+                       (error "Cannot use ~A together with ~A" it k))))))
       (loop for (k . rest) on keywords do (incompatible-keyword! k rest))))
 
   (defun %initialize-result (keywords)
@@ -756,7 +839,11 @@ E.g. COLLECT! is compatible with APPEND!, or ADJOIN!, but not with SUM!"
     (ecase (car keywords)
       ((collect! append! adjoin! minimize! maximize!) nil)
       ((sum! count!) 0)
-      ((multiply!) 1)))
+      (multiply! 1)
+      (always! t)
+      (never! t)
+      (thereis! nil)
+      (spr! "")))
 
   (defgeneric %expand-keyword-into-label (k result last)
     (:method ((k (eql 'collect!)) result last)
@@ -789,13 +876,28 @@ E.g. COLLECT! is compatible with APPEND!, or ADJOIN!, but not with SUM!"
          (setf ,result (min (or ,result item) item))))
     (:method ((k (eql 'maximize!)) result last)
       `(,(intern "MAXIMIZE!") (item)
-         (setf ,result (max (or ,result item) item)))))
+         (setf ,result (max (or ,result item) item))))
+    (:method ((k (eql 'always!)) result last)
+      `(,(intern "ALWAYS!") (item)
+         ;; FIXME: short circuit
+         (setf ,result (and ,result item))))
+    (:method ((k (eql 'never!)) result last)
+      `(,(intern "NEVER!") (item)
+         ;; FIXME: short circuit
+         (setf ,result (and ,result (not item)))))
+    (:method ((k (eql 'thereis!)) result last)
+      `(,(intern "THEREIS!") (item)
+         ;; FIXME: short circuit
+         (setf ,result (or ,result item))))
+    (:method ((k (eql 'spr!)) result last)
+      `(,(intern "SPR!") (&rest args)
+         (setf ,result (apply #'spr ,result args)))))
 
   (defmacro looping (&body body)
     "Run `body` in an environment where the symbols COLLECT!, APPEND!, ADJOIN!,
-SUM!, MULTIPLY!, COUNT!, MINIMIZE!, and MAXIMIZE! are bound to functions that
-can be used to collect / append, sum, multiply, count, minimize or maximize
-things respectively.
+SUM!, MULTIPLY!, COUNT!, MINIMIZE!, MAXIMIZE!, ALWAYS!, NEVER!, THEREIS!, and SPR! are
+bound to functions that can be used to collect / append, sum, multiply, count,
+minimize or maximize things respectively.
 
 Mixed usage of COLLECT!/APPEND!/ADJOIN!, SUM!, MULTIPLY!, COUNT!, MINIMIZE! and
 MAXIMIZE! is not supported.
@@ -830,7 +932,7 @@ Examples:
   "
     (let1 keywords (remove-duplicates (%extract-reduce-keywords body))
       (%assert-compatible-reduce-keywords keywords)
-      (with-gensyms (result last expand-fn)
+      (with-gensyms (result last)
         (let1 labels (mapcar (lambda (k) (%expand-keyword-into-label k result last)) keywords)
           `(let* ((,result ,(%initialize-result keywords))
                   (,last nil))
@@ -865,8 +967,37 @@ Examples:
   
 
   (defmacro pmx (form)
-    "MACROEXPAND-1 and then PRETTY-PRINT `form`."
-    `(pprint (macroexpand-1 ',form)))
+    "MACROEXPAND-1 `form` and then PRETTY-PRINT it.
+
+The macro utlimately expands into `form`; this makes it particularly convenient
+to wrap an expression with this macro, and see what the expression expands to
+without altering the original behavior.
+"
+    `(progn
+       (pprint (macroexpand-1 ',form))
+       ,form))
+  
+
+  (defmacro psx (form)
+    "PRETTY-PRINT `form`.
+
+The macro utlimately expands into `form`; this makes it particularly convenient
+to wrap a reader macro expression with this macro, and see what it expands to
+without altering the original behavior.
+
+Examples:
+
+> (psx [oddp _])
+; (LAMBDA (&OPTIONAL _) (DECLARE (IGNORABLE _)) (ODDP _))
+#<FUNCTION (LAMBDA (&OPTIONAL _)) {B800F9678B}>
+
+> (mapcar (psx [oddp _]) (list 1 2 3))
+; (LAMBDA (&OPTIONAL _) (DECLARE (IGNORABLE _)) (ODDP _))
+(T NIL T)
+"
+    `(progn
+       (pprint ',form)
+       ,form))
   
 
   (defun pr (&rest args)
@@ -911,6 +1042,11 @@ In `body` the symbol `recur` will be bound to the function for recurring."
          (,(intern "RECUR") ,@values))))
   )                                        ; eval-when
 
+  (defmacro repeat (n &body body)
+    "Runs BODY N times."
+    `(loop repeat ,n do ,@body))
+  
+
   (defmacro retriable (&body body)
     "Wraps `body` in a RESTART-CASE with a RETRY restart. When invoked, the
 restart will re-execute the body forms until they return a non-NIL value.
@@ -936,10 +1072,10 @@ Examples:
       (when (> x 5)
         x)))
 "
-    (let1 report "Retry."
+    (let1 report-args (list "Retry.")
       (if (eq (caar body) :report)
-        (setf report (cadar body) body (nthcdr 2 body)))
-      `(loop (with-simple-restart (retry ,report)
+        (setf report-args (cdar body) body (cdr body)))
+      `(loop (with-simple-restart (retry ,@report-args)
                (return (progn ,@body))))))
   
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -1146,8 +1282,8 @@ simply changing DEFCLASS into UNDEFCLASS"
 Similar to MAKUNBOUND, except it has the same signature of DEFCONSTANT; this
 makes it particularly easy to make a symbol unbound by simply changing
 DEFCONSTANT into UNDEFVAR"
-    (declare (ignore val doc))
-    `(makunbound ',var))
+    (declare (ignore value doc))
+    `(makunbound ',name))
   
 
   (defmacro undefmacro (name lambda-list &body body)
@@ -1157,7 +1293,7 @@ environment.
 Similar to FMAKUNBOUND, except it has the same signature of DEFUN; this makes
 it particularly easy to undefine a function or a macro by simply changing DEFUN
 into UNDEFUN and DEFMACRO into UNDEFMACRO"
-    (declare (ignore lamda-list body))
+    (declare (ignore lambda-list body))
     `(fmakunbound ',name))
   
 
@@ -1217,7 +1353,7 @@ environment.
 Similar to FMAKUNBOUND, except it has the same signature of DEFUN; this makes
 it particularly easy to undefine a function or a macro by simply changing DEFUN
 into UNDEFUN and DEFMACRO into UNDEFMACRO"
-    (declare (ignore lamda-list body))
+    (declare (ignore lambda-list body))
     `(fmakunbound ',name))
   
 
@@ -1411,16 +1547,16 @@ Examples:
              ,result)))))
   
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (export '(@ aand aif alist-keys alist-values appendf aprog1 assoc-value
+  (export '(@ aand aif alist alist-keys alist-values appendf aprog1 assoc-value
             rassoc-value awhen bnd* bnd1 continuable d-b dbg dbgl dolists
-            dorange dorangei doseq flet* fn if-let if-not iota keep-if
-            keep-if-not last-elt let1 looping m-v-b make-keyword mklist
-            once-only plist-keys plist-values pmx pr prn prs range recursively
-            retriable split split-sequence split-sequence-if
-            split-sequence-if-not spr sprn sprs string-ends-with-p
-            string-starts-with-p subdivide symb undefclass undefconstant
-            undefmacro undefmethod undefpackage undefparameter undefun undefvar
-            until w/gensyms w/slots when-let when-let* while with-gensyms
-            with-unique-names ~> ~>>)))
+            dorange dorangei doseq enumerate flet* fn hash-table-keys
+            hash-table-values if-let if-not iota keep-if keep-if-not last-elt
+            let1 looping m-v-b make-keyword mklist once-only plist-keys
+            plist-values pmx psx pr prn prs range recursively repeat retriable
+            split split-sequence split-sequence-if split-sequence-if-not spr
+            sprn sprs string-ends-with-p string-starts-with-p subdivide symb
+            undefclass undefconstant undefmacro undefmethod undefpackage
+            undefparameter undefun undefvar until value-at w/gensyms w/slots
+            when-let when-let* while with-gensyms with-unique-names ~> ~>>)))
 
 ;;;; END OF mlutils.lisp ;;;;
