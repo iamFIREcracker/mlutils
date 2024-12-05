@@ -2,7 +2,7 @@
 ;;;; See http://quickutil.org for details.
 
 ;;;; To regenerate:
-;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :AAND :AIF :ALIST :ALIST-KEYS :ALIST-VALUES :APPENDF :APROG1 :ASSOC-VALUE :AWHEN :BND* :BND1 :CONTINUABLE :D-B :DBG :DBGL :DOLISTS :DORANGE :DORANGEI :DOSEQ :ENUMERATE :FLET* :FN :HASH-TABLE-KEYS :HASH-TABLE-VALUES :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LET1 :LOOPING :M-V-B :MAKE-KEYWORD :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX :PSX :PR :PRN :PRS :RANGE :RECURSIVELY :REPEAT :RETRIABLE :SPLIT :SPLIT-SEQUENCE :SPR :SPRN :SPRS :STRING-ENDS-WITH-P :STRING-STARTS-WITH-P :SUBDIVIDE :SYMB :UNDEFCLASS :UNDEFCONSTANT :UNDEFMACRO :UNDEFMETHOD :UNDEFPACKAGE :UNDEFPARAMETER :UNDEFUN :UNDEFVAR :UNTIL :VALUE-AT :W/GENSYMS :W/SLOTS :WHEN-LET :WHILE :WITH-GENSYMS :~> :~>>) :ensure-package T :package "MLUTILS")
+;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :AAND :AIF :ALIST :ALIST-KEYS :ALIST-VALUES :APPENDF :APROG1 :ASSOC-VALUE :AWHEN :BND* :BND1 :CONTINUABLE :D-B :DBG :DBGL :DOALIST :DOHASH :DOLISTS :DORANGE :DORANGEI :DOSEQ :DOSEQS :DOSUBLISTS :ENUMERATE :FLET* :FN :HASH-TABLE-KEYS :HASH-TABLE-VALUES :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LET1 :LOOPING :M-V-B :MAKE-KEYWORD :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX :PR :PRN :PROG1-LET :PRS :PSX :RANGE :RECURSIVELY :REPEAT :RETRIABLE :SPLIT :SPLIT-SEQUENCE :SPR :SPRN :SPRS :STRING-ENDS-WITH-P :STRING-STARTS-WITH-P :SUBDIVIDE :SYMB :UNDEFCLASS :UNDEFCONSTANT :UNDEFMACRO :UNDEFMETHOD :UNDEFPACKAGE :UNDEFPARAMETER :UNDEFUN :UNDEFVAR :UNTIL :VALUE-AT :W/GENSYMS :W/SLOTS :WHEN-LET :WHEN-NOT :WHILE :WHILE-NOT :WITH-GENSYMS :~> :~>>) :ensure-package T :package "MLUTILS")
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unless (find-package "MLUTILS")
@@ -18,9 +18,10 @@
                                          :AAND :ALIST :ALIST-KEYS :ALIST-VALUES
                                          :APPENDF :APROG1 :AWHEN :BND* :BND1
                                          :CONTINUABLE :ABBR :D-B :DBG :DBGL
-                                         :DOLISTS :DORANGE :DORANGEI
-                                         :MAKE-GENSYM-LIST :ONCE-ONLY :DOSEQ
-                                         :ENUMERATE :FLET* :FN :MAPHASH-KEYS
+                                         :MAKE-GENSYM-LIST :ONCE-ONLY :DOALIST
+                                         :DOHASH :DOLISTS :DORANGE :DORANGEI
+                                         :DOSEQ :DOSEQS :DOSUBLISTS :ENUMERATE
+                                         :FLET* :FN :MAPHASH-KEYS
                                          :HASH-TABLE-KEYS :MAPHASH-VALUES
                                          :HASH-TABLE-VALUES :IF-LET :IF-NOT
                                          :IOTA :KEEP-IF :KEEP-IF-NOT
@@ -30,18 +31,18 @@
                                          :PROPER-LIST-P :PROPER-LIST
                                          :PROPER-SEQUENCE :LAST-ELT :LOOPING
                                          :M-V-B :MAKE-KEYWORD :MKLIST
-                                         :PLIST-KEYS :PLIST-VALUES :PMX :PSX
-                                         :PR :PRN :PRS :RANGE :RECURSIVELY
-                                         :REPEAT :RETRIABLE :SPLIT-SEQUENCE
-                                         :SPLIT :SPR :SPRN :SPRS
-                                         :STRING-ENDS-WITH-P
+                                         :PLIST-KEYS :PLIST-VALUES :PMX :PR
+                                         :PRN :PROG1-LET :PRS :PSX :RANGE
+                                         :RECURSIVELY :REPEAT :RETRIABLE
+                                         :SPLIT-SEQUENCE :SPLIT :SPR :SPRN
+                                         :SPRS :STRING-ENDS-WITH-P
                                          :STRING-STARTS-WITH-P :SUBDIVIDE
                                          :MKSTR :SYMB :UNDEFCLASS
                                          :UNDEFCONSTANT :UNDEFMACRO
                                          :UNDEFMETHOD :UNDEFPACKAGE
                                          :UNDEFPARAMETER :UNDEFUN :UNDEFVAR
                                          :UNTIL :W/GENSYMS :W/SLOTS :WHEN-LET
-                                         :WHILE :~> :~>>))))
+                                         :WHEN-NOT :WHILE :WHILE-NOT :~> :~>>))))
 
   (deftype string-designator ()
     "A string designator type. A string designator is either a string, a symbol,
@@ -395,51 +396,6 @@ newline.  Returns the last arg. labeled and readably."
        (terpri)
        (finish-output)))
   
-
-  (defmacro dolists (((var1 list1) (var2 list2) &rest var-list-specs) &body body)
-    "Like DOLIST, except it allows you to iterate over multiple lists in parallel.
-
-  > (let ((list '(1 2 3 4)))
-      (dolists ((x1 list)
-                (x2 (cdr list)))
-        (print (list x1 x2))))
-  ;; (1 2)
-  ;; (2 3)
-  ;; (3 4)
-  NIL
-  "
-    `(loop
-       :for ,var1 :in ,list1 :for ,var2 :in ,list2
-       ,@(loop for (var list) in var-list-specs
-               collect 'FOR collect var collect 'IN collect list)
-       :do ,@body))
-  
-
-  (defmacro dorange ((var from to &optional (step 1) (result nil result?)) &body body)
-    "Binds `var` to all the distinct values in the range [`from`, `to`[, with
-`step` step (note: `to` is excluded), and runs `body` inside that
-lexical environmnet."
-    (let ((step-g (gensym "step"))
-          (to-g (gensym "to")))
-      `(do* ((,step-g ,step)
-             (,to-g ,to)
-             (,var ,from (+ ,var ,step-g)))
-         ((if (>= ,step-g 0) (>= ,var ,to-g) (<= ,var ,to-g))
-          ,@(when result? `(,result)))
-         ,@body)))
-  
-
-  (defmacro dorangei ((var from to &optional (step 1) (result nil result?)) &body body)
-    "Like DORANGE, `to` is inclusive (the range is: [`from`, `to`])."
-    (let ((step-g (gensym "step"))
-          (to-g (gensym "to")))
-      `(do* ((,step-g ,step)
-             (,to-g ,to)
-             (,var ,from (+ ,var ,step-g)))
-         ((if (>= ,step-g 0) (> ,var ,to-g) (< ,var ,to-g))
-          ,@(when result? `(,result)))
-         ,@body)))
-  
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun make-gensym-list (length &optional (x "G"))
     "Returns a list of `length` gensyms, each generated as if with a call to `make-gensym`,
@@ -488,6 +444,64 @@ Example:
                ,@forms)))))
   
 
+  (defmacro doalist ((key val alist &optional (result nil result?)) &body body)
+    "Iterates over the elements of `alist`."
+    (once-only (alist)
+      `(loop :for (,key . ,val) :in ,alist :do ,@body ,@(when result? `(:finally (return ,result))))))
+  
+
+  (defmacro dohash ((key value table &optional (result nil result?)) &body body)
+    "Iterate over the hash table `table`, executing `body`, with `key` and
+   `value` bound to the keys and values of the hash table
+   respectively. Return `result` from the iteration form."
+    `(loop :for ,key :being :the :hash-keys :of ,table :using (hash-value ,value) :do ,@body ,@(when result? `(:finally (return ,result)))))
+  
+
+  (defmacro dolists (((var1 list1) (var2 list2) &rest var-list-specs) &body body)
+    "Like DOLIST, except it allows you to iterate over multiple lists in parallel.
+
+  > (let ((list '(1 2 3 4)))
+      (dolists ((x1 list)
+                (x2 (cdr list)))
+        (print (list x1 x2))))
+  ;; (1 2)
+  ;; (2 3)
+  ;; (3 4)
+  NIL
+  "
+    `(loop
+       :for ,var1 :in ,list1 :for ,var2 :in ,list2
+       ,@(loop for (var list) in var-list-specs
+               collect 'FOR collect var collect 'IN collect list)
+       :do ,@body))
+  
+
+  (defmacro dorange ((var from to &optional (step 1) (result nil result?)) &body body)
+    "Binds `var` to all the distinct values in the range [`from`, `to`[, with
+`step` step (note: `to` is excluded), and runs `body` inside that
+lexical environmnet."
+    (let ((step-g (gensym "step"))
+          (to-g (gensym "to")))
+      `(do* ((,step-g ,step)
+             (,to-g ,to)
+             (,var ,from (+ ,var ,step-g)))
+         ((if (>= ,step-g 0) (>= ,var ,to-g) (<= ,var ,to-g))
+          ,@(when result? `(,result)))
+         ,@body)))
+  
+
+  (defmacro dorangei ((var from to &optional (step 1) (result nil result?)) &body body)
+    "Like DORANGE, `to` is inclusive (the range is: [`from`, `to`])."
+    (let ((step-g (gensym "step"))
+          (to-g (gensym "to")))
+      `(do* ((,step-g ,step)
+             (,to-g ,to)
+             (,var ,from (+ ,var ,step-g)))
+         ((if (>= ,step-g 0) (> ,var ,to-g) (< ,var ,to-g))
+          ,@(when result? `(,result)))
+         ,@body)))
+  
+
   (defmacro doseq ((var seq &optional (result nil result?)) &body body)
     "Iterate across the sequence `seq`, binding the variable `var` to
 each element of the sequence and executing `body`. Return the value
@@ -500,6 +514,25 @@ lambda-list
       `(etypecase ,seq
          (list (loop :for ,var :in ,seq :do ,@body ,@(when result? `(:finally (return ,result)))))
          (sequence (loop :for ,var :across ,seq :do ,@body ,@(when result? `(:finally (return ,result))))))))
+  
+
+  (defmacro doseqs (((var1 seq1) (var2 seq2) &rest var-seq-specs) &body body)
+    "Like DOSEQ, except this can iterate over multiple sequences at the same
+time."
+    (let* ((vars (list* var1 var2 (mapcar #'car var-seq-specs)))
+           (seqs (list* seq1 seq2 (mapcar #'cadr var-seq-specs))))
+
+      `(block nil
+         (map nil (lambda (,@vars) ,@body) ,@seqs))))
+  
+
+  (defmacro dosublists ((var list &optional (result nil result?)) &body body)
+    "Like DOLIST, except:
+
+- `var` is bound to successive sublists of `list` (similar to MAPL, LOOP..ON)
+- `var` can be a lambda-list
+"
+    `(loop :for ,var :on ,list :do ,@body ,@(when result? `(:finally (return ,result)))))
   
 
   (defgeneric enumerate (x &key start)
@@ -978,6 +1011,42 @@ without altering the original behavior.
        ,form))
   
 
+  (defun pr (&rest args)
+    "Print `args` to screen. Returns the first arg."
+    (format t "~{~A~}" args)
+    (finish-output)
+    (first args))
+  
+
+  (defun prn (&rest args)
+    "Print `args` to screen, separated by a newline. Returns the first arg."
+    (format t "~{~A~^~%~}" args)
+    (finish-output)
+    (first args))
+  
+
+  (defmacro prog1-let ((name result-form) &body body)
+    "Like PROG1, except it lets you bind the result of the `result-form` (i.e., the returned
+form) to `name` (via LET) for the scope of `body`.
+
+Inspired by ActiveSupport: Object#returning
+https://weblog.jamisbuck.org/2006/10/27/mining-activesupport-object-returning.html"
+    (prog1-let-expand name result-form body))
+
+  (eval-when (:compile-toplevel :load-toplevel :execute)
+    (defun prog1-let-expand (name result-form body)
+      `(let1 ,name ,result-form
+         ,@body
+         ,name)))
+  
+
+  (defun prs (&rest args)
+    "Print `args` to screen, separated by a space. Returns the first arg."
+    (format t "~{~A~^ ~}" args)
+    (finish-output)
+    (first args))
+  
+
   (defmacro psx (form)
     "PRETTY-PRINT `form`.
 
@@ -998,27 +1067,6 @@ Examples:
     `(progn
        (pprint ',form)
        ,form))
-  
-
-  (defun pr (&rest args)
-    "Print `args` to screen. Returns the first arg."
-    (format t "~{~A~}" args)
-    (finish-output)
-    (first args))
-  
-
-  (defun prn (&rest args)
-    "Print `args` to screen, separated by a newline. Returns the first arg."
-    (format t "~{~A~^~%~}" args)
-    (finish-output)
-    (first args))
-  
-
-  (defun prs (&rest args)
-    "Print `args` to screen, separated by a space. Returns the first arg."
-    (format t "~{~A~^ ~}" args)
-    (finish-output)
-    (first args))
   
 
   (defun range (start end &key (step 1) (key 'identity))
@@ -1438,11 +1486,17 @@ PROGN."
              ,@(bind (cdr binding-list) forms))))))
   
 
+  (defmacro when-not (test &body body)
+    "Like WHEN, except TEST gets wrapped inside NOT."
+    `(when (not ,test) ,@body))
+  
+
   (defmacro while (expression &body body)
     "Executes `body` while `expression` is true."
     `(loop while ,expression do
        ,@body))
   
+  (abbr while-not until)
 
   (defmacro ~> (x &rest forms)
     "Threads the expr through the forms, like Clojure's `->`.
@@ -1548,15 +1602,17 @@ Examples:
   
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (export '(@ aand aif alist alist-keys alist-values appendf aprog1 assoc-value
-            rassoc-value awhen bnd* bnd1 continuable d-b dbg dbgl dolists
-            dorange dorangei doseq enumerate flet* fn hash-table-keys
-            hash-table-values if-let if-not iota keep-if keep-if-not last-elt
-            let1 looping m-v-b make-keyword mklist once-only plist-keys
-            plist-values pmx psx pr prn prs range recursively repeat retriable
-            split split-sequence split-sequence-if split-sequence-if-not spr
-            sprn sprs string-ends-with-p string-starts-with-p subdivide symb
-            undefclass undefconstant undefmacro undefmethod undefpackage
-            undefparameter undefun undefvar until value-at w/gensyms w/slots
-            when-let when-let* while with-gensyms with-unique-names ~> ~>>)))
+            rassoc-value awhen bnd* bnd1 continuable d-b dbg dbgl doalist
+            dohash dolists dorange dorangei doseq doseqs dosublists enumerate
+            flet* fn hash-table-keys hash-table-values if-let if-not iota
+            keep-if keep-if-not last-elt let1 looping m-v-b make-keyword mklist
+            once-only plist-keys plist-values pmx pr prn prog1-let prs psx
+            range recursively repeat retriable split split-sequence
+            split-sequence-if split-sequence-if-not spr sprn sprs
+            string-ends-with-p string-starts-with-p subdivide symb undefclass
+            undefconstant undefmacro undefmethod undefpackage undefparameter
+            undefun undefvar until value-at w/gensyms w/slots when-let
+            when-let* when-not while while-not with-gensyms with-unique-names
+            ~> ~>>)))
 
 ;;;; END OF mlutils.lisp ;;;;

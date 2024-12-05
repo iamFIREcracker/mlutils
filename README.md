@@ -173,6 +173,20 @@ Personal list of utils to make Common Lisp feel a bit more like home
     Print `args`, labeled, separated by a newline, and followed by a final
     newline.  Returns the last arg. labeled and readably.
 
+<a id="x-28MLUTILS-3ADOALIST-20MGL-PAX-3AMACRO-29"></a>
+
+- [macro] **DOALIST** *(KEY VAL ALIST &OPTIONAL (RESULT NIL)) &BODY BODY*
+
+    Iterates over the elements of `alist`.
+
+<a id="x-28MLUTILS-3ADOHASH-20MGL-PAX-3AMACRO-29"></a>
+
+- [macro] **DOHASH** *(KEY VALUE TABLE &OPTIONAL (RESULT NIL)) &BODY BODY*
+
+    Iterate over the hash table `table`, executing `body`, with `key` and
+    `value` bound to the keys and values of the hash table
+    respectively. Return `result` from the iteration form.
+
 <a id="x-28MLUTILS-3ADOLISTS-20MGL-PAX-3AMACRO-29"></a>
 
 - [macro] **DOLISTS** *((VAR1 LIST1) (VAR2 LIST2) &REST VAR-LIST-SPECS) &BODY BODY*
@@ -213,6 +227,24 @@ Personal list of utils to make Common Lisp feel a bit more like home
     
     Note: `DOSEQ` expands to a [`LOOP`][30e1] form, so `var` can either be a symbol, or a
     lambda-list
+
+<a id="x-28MLUTILS-3ADOSEQS-20MGL-PAX-3AMACRO-29"></a>
+
+- [macro] **DOSEQS** *((VAR1 SEQ1) (VAR2 SEQ2) &REST VAR-SEQ-SPECS) &BODY BODY*
+
+    Like [`DOSEQ`][d6a5], except this can iterate over multiple sequences at the same
+    time.
+
+<a id="x-28MLUTILS-3ADOSUBLISTS-20MGL-PAX-3AMACRO-29"></a>
+
+- [macro] **DOSUBLISTS** *(VAR LIST &OPTIONAL (RESULT NIL)) &BODY BODY*
+
+    Like [`DOLIST`][1bfd], except:
+    
+    - `var` is bound to successive sublists of `list` (similar to [`MAPL`][1769], LOOP..ON)
+    
+    - `var` can be a lambda-list
+
 
 <a id="x-28MLUTILS-3AENUMERATE-20GENERIC-FUNCTION-29"></a>
 
@@ -420,6 +452,34 @@ Personal list of utils to make Common Lisp feel a bit more like home
     to wrap an expression with this macro, and see what the expression expands to
     without altering the original behavior.
 
+<a id="x-28MLUTILS-3APR-20FUNCTION-29"></a>
+
+- [function] **PR** *&REST ARGS*
+
+    Print `args` to screen. Returns the first arg.
+
+<a id="x-28MLUTILS-3APRN-20FUNCTION-29"></a>
+
+- [function] **PRN** *&REST ARGS*
+
+    Print `args` to screen, separated by a newline. Returns the first arg.
+
+<a id="x-28MLUTILS-3APROG1-LET-20MGL-PAX-3AMACRO-29"></a>
+
+- [macro] **PROG1-LET** *(NAME RESULT-FORM) &BODY BODY*
+
+    Like [`PROG1`][2053], except it lets you bind the result of the `result-form` (i.e., the returned
+    form) to `name` (via [`LET`][4853]) for the scope of `body`.
+    
+    Inspired by ActiveSupport: Object#returning
+    https://weblog.jamisbuck.org/2006/10/27/mining-activesupport-object-returning.html
+
+<a id="x-28MLUTILS-3APRS-20FUNCTION-29"></a>
+
+- [function] **PRS** *&REST ARGS*
+
+    Print `args` to screen, separated by a space. Returns the first arg.
+
 <a id="x-28MLUTILS-3APSX-20MGL-PAX-3AMACRO-29"></a>
 
 - [macro] **PSX** *FORM*
@@ -441,24 +501,6 @@ Personal list of utils to make Common Lisp feel a bit more like home
     > ; (`LAMBDA` (`&OPTIONAL` \_) (`DECLARE` (`IGNORABLE` \_)) (`ODDP` \_))
     > (`T` `NIL` `T`)
 
-
-<a id="x-28MLUTILS-3APR-20FUNCTION-29"></a>
-
-- [function] **PR** *&REST ARGS*
-
-    Print `args` to screen. Returns the first arg.
-
-<a id="x-28MLUTILS-3APRN-20FUNCTION-29"></a>
-
-- [function] **PRN** *&REST ARGS*
-
-    Print `args` to screen, separated by a newline. Returns the first arg.
-
-<a id="x-28MLUTILS-3APRS-20FUNCTION-29"></a>
-
-- [function] **PRS** *&REST ARGS*
-
-    Print `args` to screen, separated by a space. Returns the first arg.
 
 <a id="x-28MLUTILS-3ARANGE-20FUNCTION-29"></a>
 
@@ -733,11 +775,23 @@ Personal list of utils to make Common Lisp feel a bit more like home
     If all variables were bound to true values, then `FORMS` are executed as an
     implicit [`PROGN`][0cc3].
 
+<a id="x-28MLUTILS-3AWHEN-NOT-20MGL-PAX-3AMACRO-29"></a>
+
+- [macro] **WHEN-NOT** *TEST &BODY BODY*
+
+    Like [`WHEN`][baaf], except `TEST` gets wrapped inside `NOT`([`0`][1013] [`1`][954a]).
+
 <a id="x-28MLUTILS-3AWHILE-20MGL-PAX-3AMACRO-29"></a>
 
 - [macro] **WHILE** *EXPRESSION &BODY BODY*
 
     Executes `body` while `expression` is true.
+
+<a id="x-28MLUTILS-3AWHILE-NOT-20MGL-PAX-3AMACRO-29"></a>
+
+- [macro] **WHILE-NOT** *EXPRESSION &BODY BODY*
+
+    Executes `body` until `expression` is true.
 
 <a id="x-28MLUTILS-3AWITH-GENSYMS-20MGL-PAX-3AMACRO-29"></a>
 
@@ -833,6 +887,7 @@ Personal list of utils to make Common Lisp feel a bit more like home
   [119e]: http://www.lispworks.com/documentation/HyperSpec/Body/t_fn.htm "FUNCTION (MGL-PAX:CLHS CLASS)"
   [14cb]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defmac.htm "DEFMACRO (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [1574]: http://www.lispworks.com/documentation/HyperSpec/Body/s_declar.htm "DECLARE (MGL-PAX:CLHS MGL-PAX:MACRO)"
+  [1769]: http://www.lispworks.com/documentation/HyperSpec/Body/f_mapc_.htm "MAPL (MGL-PAX:CLHS FUNCTION)"
   [1867]: http://www.lispworks.com/documentation/HyperSpec/Body/r_contin.htm "CONTINUE (MGL-PAX:CLHS RESTART)"
   [1aa3]: http://www.lispworks.com/documentation/HyperSpec/Body/f_nth.htm "NTH (MGL-PAX:CLHS FUNCTION)"
   [1bfd]: http://www.lispworks.com/documentation/HyperSpec/Body/m_dolist.htm "DOLIST (MGL-PAX:CLHS MGL-PAX:MACRO)"
@@ -884,6 +939,7 @@ Personal list of utils to make Common Lisp feel a bit more like home
   [d162]: http://www.lispworks.com/documentation/HyperSpec/Body/e_error.htm "ERROR (MGL-PAX:CLHS CONDITION)"
   [d5a2]: http://www.lispworks.com/documentation/HyperSpec/Body/f_car_c.htm "CAR (MGL-PAX:CLHS FUNCTION)"
   [d675]: http://www.lispworks.com/documentation/HyperSpec/Body/f_append.htm "APPEND (MGL-PAX:CLHS FUNCTION)"
+  [d6a5]: #x-28MLUTILS-3ADOSEQ-20MGL-PAX-3AMACRO-29 "MLUTILS:DOSEQ MGL-PAX:MACRO"
   [dae6]: http://www.lispworks.com/documentation/HyperSpec/Body/f_string.htm "STRING (MGL-PAX:CLHS FUNCTION)"
   [dd55]: http://www.lispworks.com/documentation/HyperSpec/Body/t_and.htm "AND (MGL-PAX:CLHS TYPE)"
   [e22b]: http://www.lispworks.com/documentation/HyperSpec/Body/f_aref.htm "AREF (MGL-PAX:CLHS FUNCTION)"

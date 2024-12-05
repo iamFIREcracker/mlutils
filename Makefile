@@ -1,17 +1,10 @@
-quickutils := $(shell find vendor/quickutil/ -type f \( -iname \*.asd -o -iname \*.lisp \))
-
 SBCL_BIN ?= sbclw
 SBCL_ARGS ?= --noinform
 
 
 .PHONY: all
-all: mlutils.lisp
-
-mlutils.lisp: make-mlutils.lisp $(quickutils) vendor/quickutil
+all:
 	${SBCL_BIN} ${SBCL_ARGS} --load "make-mlutils.lisp"  --eval "(uiop:quit)"
-
-vendor/quickutil:
-	ln -sf ~/Workspace/quickutil vendor/quickutil
 
 
 .PHONY: mgl-pax
