@@ -630,6 +630,12 @@ Personal list of utils to make Common Lisp feel a bit more like home
     
     See also: `symbolicate`
 
+<a id="x-28MLUTILS-3ATAKE-20FUNCTION-29"></a>
+
+- [function] **TAKE** *N SEQUENCE*
+
+    Take the first `n` elements from `sequence`.
+
 <a id="x-28MLUTILS-3AUNDEFCLASS-20MGL-PAX-3AMACRO-29"></a>
 
 - [macro] **UNDEFCLASS** *CLASS DIRECT-SUPERCLASSES DIRECT-SLOTS &REST OPTIONS*

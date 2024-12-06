@@ -76,6 +76,7 @@
                             (string-starts-with-p function)
                             (subdivide function)
                             (symb function)
+                            (take function)
                             (undefclass pax:macro)
                             (undefconstant pax:macro)
                             (undefmacro pax:macro)

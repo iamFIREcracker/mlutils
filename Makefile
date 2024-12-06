@@ -1,10 +1,8 @@
 SBCL_BIN ?= sbclw
 SBCL_ARGS ?= --noinform
 
-
 .PHONY: all
-all:
-	${SBCL_BIN} ${SBCL_ARGS} --load "make-mlutils.lisp"  --eval "(uiop:quit)"
+all: build doc
 
 
 .PHONY: mgl-pax
@@ -13,6 +11,9 @@ mgl-pax:
 	curl -L https://github.com/melisgl/mgl-pax/archive/6bfd77ddfa79f0e0905eb4b99d46ac5d2dd69c24.tar.gz \
 		| tar -xz -C vendor/mgl-pax --strip-components=1
 
+.PHONY: build
+build:
+	${SBCL_BIN} ${SBCL_ARGS} --load "make-mlutils.lisp"  --eval "(uiop:quit)"
 
 .PHONY: doc
 doc:

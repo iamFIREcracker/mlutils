@@ -2,7 +2,7 @@
 ;;;; See http://quickutil.org for details.
 
 ;;;; To regenerate:
-;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :AAND :AIF :ALIST :ALIST-KEYS :ALIST-VALUES :APPENDF :APROG1 :ASSOC-VALUE :AWHEN :BND* :BND1 :CONTINUABLE :D-B :DBG :DBGL :DOALIST :DOHASH :DOLISTS :DORANGE :DORANGEI :DOSEQ :DOSEQS :DOSUBLISTS :ENUMERATE :FLET* :FN :HASH-TABLE-KEYS :HASH-TABLE-VALUES :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LET1 :LOOPING :M-V-B :MAKE-KEYWORD :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX :PR :PRN :PROG1-LET :PRS :PSX :RANGE :RECURSIVELY :REPEAT :RETRIABLE :SPLIT :SPLIT-SEQUENCE :SPR :SPRN :SPRS :STRING-ENDS-WITH-P :STRING-STARTS-WITH-P :SUBDIVIDE :SYMB :UNDEFCLASS :UNDEFCONSTANT :UNDEFMACRO :UNDEFMETHOD :UNDEFPACKAGE :UNDEFPARAMETER :UNDEFUN :UNDEFVAR :UNTIL :VALUE-AT :W/GENSYMS :W/SLOTS :WHEN-LET :WHEN-NOT :WHILE :WHILE-NOT :WITH-GENSYMS :~> :~>>) :ensure-package T :package "MLUTILS")
+;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :AAND :AIF :ALIST :ALIST-KEYS :ALIST-VALUES :APPENDF :APROG1 :ASSOC-VALUE :AWHEN :BND* :BND1 :CONTINUABLE :D-B :DBG :DBGL :DOALIST :DOHASH :DOLISTS :DORANGE :DORANGEI :DOSEQ :DOSEQS :DOSUBLISTS :ENUMERATE :FLET* :FN :HASH-TABLE-KEYS :HASH-TABLE-VALUES :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LET1 :LOOPING :M-V-B :MAKE-KEYWORD :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX :PR :PRN :PROG1-LET :PRS :PSX :RANGE :RECURSIVELY :REPEAT :RETRIABLE :SPLIT :SPLIT-SEQUENCE :SPR :SPRN :SPRS :STRING-ENDS-WITH-P :STRING-STARTS-WITH-P :SUBDIVIDE :SYMB :TAKE :UNDEFCLASS :UNDEFCONSTANT :UNDEFMACRO :UNDEFMETHOD :UNDEFPACKAGE :UNDEFPARAMETER :UNDEFUN :UNDEFVAR :UNTIL :VALUE-AT :W/GENSYMS :W/SLOTS :WHEN-LET :WHEN-NOT :WHILE :WHILE-NOT :WITH-GENSYMS :~> :~>>) :ensure-package T :package "MLUTILS")
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unless (find-package "MLUTILS")
@@ -37,7 +37,7 @@
                                          :SPLIT-SEQUENCE :SPLIT :SPR :SPRN
                                          :SPRS :STRING-ENDS-WITH-P
                                          :STRING-STARTS-WITH-P :SUBDIVIDE
-                                         :MKSTR :SYMB :UNDEFCLASS
+                                         :MKSTR :SYMB :TAKE :UNDEFCLASS
                                          :UNDEFCONSTANT :UNDEFMACRO
                                          :UNDEFMETHOD :UNDEFPACKAGE
                                          :UNDEFPARAMETER :UNDEFUN :UNDEFVAR
@@ -1314,6 +1314,11 @@ See also: `symbolicate`"
     (values (intern (apply #'mkstr args))))
   
 
+  (defun take (n sequence)
+    "Take the first `n` elements from `sequence`."
+    (subseq sequence 0 (min (length sequence) n)))
+  
+
   (defmacro undefclass (class direct-superclasses direct-slots &rest options)
     "Removes the association between `class` and its class object.
 
@@ -1609,10 +1614,10 @@ Examples:
             once-only plist-keys plist-values pmx pr prn prog1-let prs psx
             range recursively repeat retriable split split-sequence
             split-sequence-if split-sequence-if-not spr sprn sprs
-            string-ends-with-p string-starts-with-p subdivide symb undefclass
-            undefconstant undefmacro undefmethod undefpackage undefparameter
-            undefun undefvar until value-at w/gensyms w/slots when-let
-            when-let* when-not while while-not with-gensyms with-unique-names
-            ~> ~>>)))
+            string-ends-with-p string-starts-with-p subdivide symb take
+            undefclass undefconstant undefmacro undefmethod undefpackage
+            undefparameter undefun undefvar until value-at w/gensyms w/slots
+            when-let when-let* when-not while while-not with-gensyms
+            with-unique-names ~> ~>>)))
 
 ;;;; END OF mlutils.lisp ;;;;
