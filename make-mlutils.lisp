@@ -94,6 +94,7 @@
                             (while pax:macro)
                             (while-not pax:macro)
                             (with-gensyms pax:macro)
+                            (zapf pax:macro)
                             (~> pax:macro)
                             (~>> pax:macro)
 

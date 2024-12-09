@@ -815,6 +815,23 @@ Personal list of utils to make Common Lisp feel a bit more like home
     The string-designator is used as the argument to [`gensym`][0e59] when constructing the
     unique symbol the named variable will be bound to.
 
+<a id="x-28MLUTILS-3AZAPF-20MGL-PAX-3AMACRO-29"></a>
+
+- [macro] **ZAPF** *PLACE FUNCTION*
+
+    Generic place modify macro, like [`PUSH`][2cb9] or [`INCF`][e258], which sets `place`
+    equal to (funcall function place).
+    
+    Here is how `INCF` and `PUSH` can be implemented using `ZAPF`:
+    
+    (incf x) ≡ (zapf x #'1)
+    (incf x 2) ≡ (zapf x (lambda (x) (+ x 2)))
+    (push "foo" x) ≡ (zapf x (lambda (x) (cons "foo" 2)))
+    
+    Additional reading:
+    - https://stevelosh.com/blog/2016/08/playing-with-syntax/
+    - https://malisper.me/zap/
+
 <a id="x-28MLUTILS-3A-7E-3E-20MGL-PAX-3AMACRO-29"></a>
 
 - [macro] **~>** *X &REST FORMS*
@@ -901,6 +918,7 @@ Personal list of utils to make Common Lisp feel a bit more like home
   [1f99]: http://www.lispworks.com/documentation/HyperSpec/Body/t_array.htm "ARRAY (MGL-PAX:CLHS CLASS)"
   [2053]: http://www.lispworks.com/documentation/HyperSpec/Body/m_prog1c.htm "PROG1 (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [2257]: http://www.lispworks.com/documentation/HyperSpec/Body/f_evenpc.htm "ODDP (MGL-PAX:CLHS FUNCTION)"
+  [2cb9]: http://www.lispworks.com/documentation/HyperSpec/Body/m_push.htm "PUSH (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [30e1]: http://www.lispworks.com/documentation/HyperSpec/Body/m_loop.htm "LOOP (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [329a]: http://www.lispworks.com/documentation/HyperSpec/Body/f_del_pk.htm "DELETE-PACKAGE (MGL-PAX:CLHS FUNCTION)"
   [35b1]: http://www.lispworks.com/documentation/HyperSpec/Body/f_makunb.htm "MAKUNBOUND (MGL-PAX:CLHS FUNCTION)"
@@ -949,6 +967,7 @@ Personal list of utils to make Common Lisp feel a bit more like home
   [dae6]: http://www.lispworks.com/documentation/HyperSpec/Body/f_string.htm "STRING (MGL-PAX:CLHS FUNCTION)"
   [dd55]: http://www.lispworks.com/documentation/HyperSpec/Body/t_and.htm "AND (MGL-PAX:CLHS TYPE)"
   [e22b]: http://www.lispworks.com/documentation/HyperSpec/Body/f_aref.htm "AREF (MGL-PAX:CLHS FUNCTION)"
+  [e258]: http://www.lispworks.com/documentation/HyperSpec/Body/m_incf_.htm "INCF (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [e400]: http://www.lispworks.com/documentation/HyperSpec/Body/s_lambda.htm '"s_lambda" (MGL-PAX:CLHS MGL-PAX:SECTION)'
   [e5af]: http://www.lispworks.com/documentation/HyperSpec/Body/t_symbol.htm "SYMBOL (MGL-PAX:CLHS CLASS)"
   [e5fc]: http://www.lispworks.com/documentation/HyperSpec/Body/f_assocc.htm "ASSOC (MGL-PAX:CLHS FUNCTION)"

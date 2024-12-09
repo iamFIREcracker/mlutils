@@ -2,7 +2,7 @@
 ;;;; See http://quickutil.org for details.
 
 ;;;; To regenerate:
-;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :AAND :AIF :ALIST :ALIST-KEYS :ALIST-VALUES :APPENDF :APROG1 :ASSOC-VALUE :AWHEN :BND* :BND1 :CONTINUABLE :D-B :DBG :DBGL :DOALIST :DOHASH :DOLISTS :DORANGE :DORANGEI :DOSEQ :DOSEQS :DOSUBLISTS :ENUMERATE :FLET* :FN :HASH-TABLE-KEYS :HASH-TABLE-VALUES :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LET1 :LOOPING :M-V-B :MAKE-KEYWORD :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX :PR :PRN :PROG1-LET :PRS :PSX :RANGE :RECURSIVELY :REPEAT :RETRIABLE :SPLIT :SPLIT-SEQUENCE :SPR :SPRN :SPRS :STRING-ENDS-WITH-P :STRING-STARTS-WITH-P :SUBDIVIDE :SYMB :TAKE :UNDEFCLASS :UNDEFCONSTANT :UNDEFMACRO :UNDEFMETHOD :UNDEFPACKAGE :UNDEFPARAMETER :UNDEFUN :UNDEFVAR :UNTIL :VALUE-AT :W/GENSYMS :W/SLOTS :WHEN-LET :WHEN-NOT :WHILE :WHILE-NOT :WITH-GENSYMS :~> :~>>) :ensure-package T :package "MLUTILS")
+;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :AAND :AIF :ALIST :ALIST-KEYS :ALIST-VALUES :APPENDF :APROG1 :ASSOC-VALUE :AWHEN :BND* :BND1 :CONTINUABLE :D-B :DBG :DBGL :DOALIST :DOHASH :DOLISTS :DORANGE :DORANGEI :DOSEQ :DOSEQS :DOSUBLISTS :ENUMERATE :FLET* :FN :HASH-TABLE-KEYS :HASH-TABLE-VALUES :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LET1 :LOOPING :M-V-B :MAKE-KEYWORD :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX :PR :PRN :PROG1-LET :PRS :PSX :RANGE :RECURSIVELY :REPEAT :RETRIABLE :SPLIT :SPLIT-SEQUENCE :SPR :SPRN :SPRS :STRING-ENDS-WITH-P :STRING-STARTS-WITH-P :SUBDIVIDE :SYMB :TAKE :UNDEFCLASS :UNDEFCONSTANT :UNDEFMACRO :UNDEFMETHOD :UNDEFPACKAGE :UNDEFPARAMETER :UNDEFUN :UNDEFVAR :UNTIL :VALUE-AT :W/GENSYMS :W/SLOTS :WHEN-LET :WHEN-NOT :WHILE :WHILE-NOT :WITH-GENSYMS :ZAPF :~> :~>>) :ensure-package T :package "MLUTILS")
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unless (find-package "MLUTILS")
@@ -42,7 +42,8 @@
                                          :UNDEFMETHOD :UNDEFPACKAGE
                                          :UNDEFPARAMETER :UNDEFUN :UNDEFVAR
                                          :UNTIL :W/GENSYMS :W/SLOTS :WHEN-LET
-                                         :WHEN-NOT :WHILE :WHILE-NOT :~> :~>>))))
+                                         :WHEN-NOT :WHILE :WHILE-NOT :ZAPF :~>
+                                         :~>>))))
 
   (deftype string-designator ()
     "A string designator type. A string designator is either a string, a symbol,
@@ -1511,6 +1512,23 @@ PROGN."
   
   (abbr while-not until)
 
+  (define-modify-macro zapf (function)
+    (lambda (value function)
+      (funcall function value))
+    "Generic place modify macro, like PUSH or INCF, which sets `place`
+equal to (funcall function place).
+
+Here is how INCF and PUSH can be implemented using ZAPF:
+
+(incf x) ≡ (zapf x #'1)
+(incf x 2) ≡ (zapf x (lambda (x) (+ x 2)))
+(push \"foo\" x) ≡ (zapf x (lambda (x) (cons \"foo\" 2)))
+
+Additional reading:
+- https://stevelosh.com/blog/2016/08/playing-with-syntax/
+- https://malisper.me/zap/")
+  
+
   (defmacro ~> (x &rest forms)
     "Threads the expr through the forms, like Clojure's `->`.
 
@@ -1626,6 +1644,6 @@ Examples:
             undefclass undefconstant undefmacro undefmethod undefpackage
             undefparameter undefun undefvar until value-at w/gensyms w/slots
             when-let when-let* when-not while while-not with-gensyms
-            with-unique-names ~> ~>>)))
+            with-unique-names zapf ~> ~>>)))
 
 ;;;; END OF mlutils.lisp ;;;;
