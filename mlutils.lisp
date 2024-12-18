@@ -2,7 +2,7 @@
 ;;;; See http://quickutil.org for details.
 
 ;;;; To regenerate:
-;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :AAND :AIF :ALIST :ALIST-KEYS :ALIST-VALUES :APPENDF :APROG1 :ASSOC-VALUE :AWHEN :BND* :BND1 :CONTINUABLE :D-B :DBG :DBGL :DOALIST :DOHASH :DOLISTS :DORANGE :DORANGEI :DOSEQ :DOSEQS :DOSUBLISTS :ENUMERATE :FLET* :FN :HASH-TABLE-KEYS :HASH-TABLE-VALUES :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LET1 :LOOPING :M-V-B :MAKE-KEYWORD :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX :PR :PRN :PROG1-LET :PRS :PSX :RANGE :RECURSIVELY :REPEAT :RETRIABLE :SPLIT :SPLIT-SEQUENCE :SPR :SPRN :SPRS :STRING-ENDS-WITH-P :STRING-STARTS-WITH-P :SUBDIVIDE :SYMB :TAKE :UNDEFCLASS :UNDEFCONSTANT :UNDEFMACRO :UNDEFMETHOD :UNDEFPACKAGE :UNDEFPARAMETER :UNDEFUN :UNDEFVAR :UNTIL :VALUE-AT :W/GENSYMS :W/SLOTS :WHEN-LET :WHEN-NOT :WHILE :WHILE-NOT :WITH-GENSYMS :ZAPF :~> :~>>) :ensure-package T :package "MLUTILS")
+;;;; (qtlc:save-utils-as "mlutils.lisp" :utilities '(:@ :AAND :AIF :ALIST :ALIST-KEYS :ALIST-VALUES :APPENDF :APROG1 :ASSOC-VALUE :AWHEN :BND* :BND1 :CONTINUABLE :D-B :DBG :DBGL :DOALIST :DOHASH :DOHASHK :DOHASHV :DOLISTS :DORANGE :DORANGEI :DOESEQ :DOSEQ :DOSEQS :DOSUBLISTS :ENUMERATE :FLET* :FN :HASH-TABLE-KEYS :HASH-TABLE-VALUES :IF-LET :IF-NOT :IOTA :KEEP-IF :KEEP-IF-NOT :LAST-ELT :LET1 :LOOPING :M-V-B :MAKE-KEYWORD :MKLIST :ONCE-ONLY :PLIST-KEYS :PLIST-VALUES :PMX :PR :PRN :PROG1-LET :PRS :PSX :RANGE :RECURSIVELY :REPEAT :RETRIABLE :SPLIT :SPLIT-SEQUENCE :SPR :SPRN :SPRS :STRING-ENDS-WITH-P :STRING-STARTS-WITH-P :SUBDIVIDE :SYMB :TAKE :UNDEFCLASS :UNDEFCONSTANT :UNDEFMACRO :UNDEFMETHOD :UNDEFPACKAGE :UNDEFPARAMETER :UNDEFUN :UNDEFVAR :UNTIL :VALUE-AT :W/GENSYMS :W/SLOTS :WHEN-LET :WHEN-NOT :WHILE :WHILE-NOT :WITH-GENSYMS :ZAPF :~> :~>>) :ensure-package T :package "MLUTILS")
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (unless (find-package "MLUTILS")
@@ -19,14 +19,14 @@
                                          :APPENDF :APROG1 :AWHEN :BND* :BND1
                                          :CONTINUABLE :ABBR :D-B :DBG :DBGL
                                          :MAKE-GENSYM-LIST :ONCE-ONLY :DOALIST
-                                         :DOHASH :DOLISTS :DORANGE :DORANGEI
-                                         :DOSEQ :DOSEQS :DOSUBLISTS :ENUMERATE
-                                         :FLET* :FN :MAPHASH-KEYS
-                                         :HASH-TABLE-KEYS :MAPHASH-VALUES
-                                         :HASH-TABLE-VALUES :IF-LET :IF-NOT
-                                         :IOTA :KEEP-IF :KEEP-IF-NOT
-                                         :NON-ZERO-P :EMPTYP :SAFE-ENDP
-                                         :CIRCULAR-LIST
+                                         :DOHASH :DOHASHK :DOHASHV :DOLISTS
+                                         :DORANGE :DORANGEI :DOESEQ :DOSEQ
+                                         :DOSEQS :DOSUBLISTS :ENUMERATE :FLET*
+                                         :FN :MAPHASH-KEYS :HASH-TABLE-KEYS
+                                         :MAPHASH-VALUES :HASH-TABLE-VALUES
+                                         :IF-LET :IF-NOT :IOTA :KEEP-IF
+                                         :KEEP-IF-NOT :NON-ZERO-P :EMPTYP
+                                         :SAFE-ENDP :CIRCULAR-LIST
                                          :PROPER-LIST-LENGTH/LAST-CAR
                                          :PROPER-LIST-P :PROPER-LIST
                                          :PROPER-SEQUENCE :LAST-ELT :LOOPING
@@ -359,9 +359,8 @@ Examples:
     (let1 report-args (list "Continue.")
       (if (eq (caar body) :report)
         (setf report-args (cdar body) body (cdr body)))
-      `(restart-case
-         (progn ,@body)
-         (continue () :report ,@report-args))))
+      `(with-simple-restart (continue ,@report-args)
+         ,@body)))
   
 
   (defmacro abbr (short long)
@@ -458,6 +457,26 @@ Example:
     `(loop :for ,key :being :the :hash-keys :of ,table :using (hash-value ,value) :do ,@body ,@(when result? `(:finally (return ,result)))))
   
 
+  (defmacro dohashk ((key table &optional (result nil result?)) &body body)
+    "Iterate over the hash table `table`, executing `body`, with
+`key` bound to the keys of the hash table.
+
+Return `result` from the iteration form."
+    `(loop
+       :for ,key :being :the :hash-keys :of ,table
+       :do ,@body ,@(when result? `(:finally (return ,result)))))
+  
+
+  (defmacro dohashv ((value table &optional (result nil result?)) &body body)
+    "Iterate over the hash table `table`, executing `body`, with 
+`value` bound to the values of the hash table.
+
+Return `result` from the iteration form."
+    `(loop
+       :for ,value :being :the :hash-values :of ,table 
+       :do ,@body ,@(when result? `(:finally (return ,result)))))
+  
+
   (defmacro dolists (((var1 list1) (var2 list2) &rest var-list-specs) &body body)
     "Like DOLIST, except it allows you to iterate over multiple lists in parallel.
 
@@ -503,13 +522,74 @@ lexical environmnet."
          ,@body)))
   
 
+  (defmacro doeseq ((count var seq &optional (result nil result?)) &body body)
+    "Executes `body` once for each element of `seq`, with `var` bound to the element,
+and `count` bound to increasing integer values starting from 0.  Then `result`
+is returned.
+
+Note: it's possible to change the count start value by passing in a LIST,
+instad of a symbol, where the first element is the name of count variable, and
+the second is the count start value.
+
+Note: DOESEQ expands to a LOOP form, so `var` can either be a symbol, or a
+lambda-list.
+
+Examples:
+
+    ;; Count starting from 0
+    (doeseq (i x '(a b c d)) (prin1 i) (princ \" \") (prin1 x) (princ \" \"))
+    >> 0 A 1 B 2 C 3 D
+    => NIL
+
+    ;; Custom count start 
+    (doeseq ((i 1) x '(a b c d)) (prin1 i) (princ \" \") (prin1 x) (princ \" \"))
+    >> 1 A 2 B 3 C 4 D
+    => NIL
+"
+    (once-only (seq)
+      (let ((count-var (if (atom count) count (car count)))
+            (count-start (if (atom count) 0 (cadr count))))
+        `(etypecase ,seq
+           (list (loop
+                   :for ,count-var :from ,count-start
+                   :for ,var :in ,seq :do
+                   ,@body
+                   ,@(when result? `(:finally (return ,result)))))
+           (sequence (loop
+                       :for ,count-var :from ,count-start
+                       :for ,var :across ,seq :do
+                       ,@body
+                       ,@(when result? `(:finally (return ,result)))))))))
+  
+
   (defmacro doseq ((var seq &optional (result nil result?)) &body body)
-    "Iterate across the sequence `seq`, binding the variable `var` to
-each element of the sequence and executing `body`. Return the value
-`return` from the iteration form.
+    "Executes `body` once for each element of `seq`, with `var` bound to the element.
+Then `result` is returned.
 
 Note: DOSEQ expands to a LOOP form, so `var` can either be a symbol, or a
-lambda-list
+lambda-list.
+
+Examples:
+
+    ;; Iterate a LIST
+    (doseq (x '(1 2 3 4)) (prin1 x) (princ \" \"))
+    >> 1 2 3 4
+    => NIL
+
+    ;; Iterate a SEQUENCE
+    (doseq (x #(1 2 3 4)) (prin1 x) (princ \" \"))
+    >> 1 2 3 4
+    => NIL
+
+    ;; Return form
+    (doseq (x '(1 2 3 4) 'ret-form) (prin1 x) (princ \" \"))
+    >> 1 2 3 4
+    => RET-FORM
+
+    ;; Iteration with structural binding
+    (doseq ((x _) '((1 a) (2 b) (3 c) (4 d)) 'ret-form) (prin1 x) (princ \" \"))
+    >> 1 2 3 4
+    => RET-FORM
 "
     (once-only (seq)
       `(etypecase ,seq
@@ -518,11 +598,18 @@ lambda-list
   
 
   (defmacro doseqs (((var1 seq1) (var2 seq2) &rest var-seq-specs) &body body)
-    "Like DOSEQ, except this can iterate over multiple sequences at the same
-time."
+    "Like DOSEQ, except DOSEQS can iterate over multiple sequences in parallel
+at the same time (it will stop looping as soon as one of the input sequences is
+exhausted).
+
+Unlike DOSEQ, DOSEQS does not have support for explicitly returning a value at
+the end of the iteration (e.g., via `result` form); this means DOSEQS will
+always return NIL.
+
+Also, unlike DOSEQ, DOSEQS does not expand into a LOOP form which means `var1`,
+`var2`, ..., all need to be symbols."
     (let* ((vars (list* var1 var2 (mapcar #'car var-seq-specs)))
            (seqs (list* seq1 seq2 (mapcar #'cadr var-seq-specs))))
-
       `(block nil
          (map nil (lambda (,@vars) ,@body) ,@seqs))))
   
@@ -815,7 +902,9 @@ sequence, is an empty sequence, or if OBJECT cannot be stored in SEQUENCE."
                     :expected-type '(and proper-sequence (not (satisfies emptyp))))))))
   
 
-  (defparameter *looping-reduce-keywords*  '(collect! append! adjoin!
+  (defparameter *looping-reduce-keywords*  '(collect! append!
+                                             adjoin!
+                                             push!
                                              sum! multiply!
                                              count!
                                              minimize!
@@ -838,14 +927,18 @@ sequence, is an empty sequence, or if OBJECT cannot be stored in SEQUENCE."
 
   (defun %assert-compatible-reduce-keywords (keywords)
     "Assert LOOPING reduce functions `keywords` are compatible with one another
-E.g. COLLECT! is compatible with APPEND!, or ADJOIN!, but not with SUM!"
+E.g. COLLECT! is compatible with APPEND!, but not with SUM!"
     (flet ((incompatible-keyword! (k rest)
              (ecase k
-               ((collect! append! adjoin!) (aif (find-if (lambda (k1) (and (not (eql k1 'collect!))
-                                                                           (not (eql k1 'append!))
-                                                                           (not (eql k1 'adjoin!))))
-                                                         rest)
-                                             (error "Cannot use ~A together with ~A" it k)))
+               ((collect! append!)
+                (aif (find-if (lambda (k1) (and (not (eql k1 'collect!))
+                                                (not (eql k1 'append!))))
+                              rest)
+                  (error "Cannot use ~A together with ~A" it k)))
+               (adjoin!  (aif (find 'adjoin! rest :test-not 'eq)
+                           (error "Cannot use ~A together with ~A" it k)))
+               (push!  (aif (find 'push! rest :test-not 'eq)
+                         (error "Cannot use ~A together with ~A" it k)))
                (sum! (aif (find 'sum! rest :test-not 'eq)
                        (error "Cannot use ~A together with ~A" it k)))
                (multiply! (aif (find 'multiply! rest :test-not 'eq)
@@ -871,7 +964,7 @@ E.g. COLLECT! is compatible with APPEND!, or ADJOIN!, but not with SUM!"
  E.g. when COLLECT!-ing, the initial value will be NIL; when SUM!-ing, the
  initial value will be 0"
     (ecase (car keywords)
-      ((collect! append! adjoin! minimize! maximize!) nil)
+      ((collect! append! adjoin! push! minimize! maximize!) nil)
       ((sum! count!) 0)
       (multiply! 1)
       (always! t)
@@ -895,6 +988,9 @@ E.g. COLLECT! is compatible with APPEND!, or ADJOIN!, but not with SUM!"
     (:method ((k (eql 'adjoin!)) result last short-circuit-tag)
       `(,(intern "ADJOIN!") (item &rest adjoin-args)
          (setf ,result (apply #'adjoin item ,result adjoin-args))))
+    (:method ((k (eql 'push!)) result last short-circuit-tag)
+      `(,(intern "PUSH!") (item)
+         (setf ,result (cons item ,result))))
     (:method ((k (eql 'sum!)) result last short-circuit-tag)
       `(,(intern "SUM!") (item)
          (incf ,result item)))
@@ -936,7 +1032,7 @@ E.g. COLLECT! is compatible with APPEND!, or ADJOIN!, but not with SUM!"
 
   (defmacro looping (&body body)
     "Run `body` in an environment where the symbols COLLECT!, APPEND!, ADJOIN!,
-SUM!, MULTIPLY!, COUNT!, MINIMIZE!, MAXIMIZE!, ALWAYS!, NEVER!, THEREIS!, and SPR! are
+PUSH!, SUM!, MULTIPLY!, COUNT!, MINIMIZE!, MAXIMIZE!, ALWAYS!, NEVER!, THEREIS!, and SPR! are
 bound to functions that can be used to collect / append, sum, multiply, count,
 minimize or maximize things respectively.
 
@@ -1634,13 +1730,13 @@ Examples:
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (export '(@ aand aif alist alist-keys alist-values appendf aprog1 assoc-value
             rassoc-value awhen bnd* bnd1 continuable d-b dbg dbgl doalist
-            dohash dolists dorange dorangei doseq doseqs dosublists enumerate
-            flet* fn hash-table-keys hash-table-values if-let if-not iota
-            keep-if keep-if-not last-elt let1 looping m-v-b make-keyword mklist
-            once-only plist-keys plist-values pmx pr prn prog1-let prs psx
-            range recursively repeat retriable split split-sequence
-            split-sequence-if split-sequence-if-not spr sprn sprs
-            string-ends-with-p string-starts-with-p subdivide symb take
+            dohash dohashk dohashv dolists dorange dorangei doeseq doseq doseqs
+            dosublists enumerate flet* fn hash-table-keys hash-table-values
+            if-let if-not iota keep-if keep-if-not last-elt let1 looping m-v-b
+            make-keyword mklist once-only plist-keys plist-values pmx pr prn
+            prog1-let prs psx range recursively repeat retriable split
+            split-sequence split-sequence-if split-sequence-if-not spr sprn
+            sprs string-ends-with-p string-starts-with-p subdivide symb take
             undefclass undefconstant undefmacro undefmethod undefpackage
             undefparameter undefun undefvar until value-at w/gensyms w/slots
             when-let when-let* when-not while while-not with-gensyms

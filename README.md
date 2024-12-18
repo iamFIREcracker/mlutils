@@ -187,6 +187,24 @@ Personal list of utils to make Common Lisp feel a bit more like home
     `value` bound to the keys and values of the hash table
     respectively. Return `result` from the iteration form.
 
+<a id="x-28MLUTILS-3ADOHASHK-20MGL-PAX-3AMACRO-29"></a>
+
+- [macro] **DOHASHK** *(KEY TABLE &OPTIONAL (RESULT NIL)) &BODY BODY*
+
+    Iterate over the hash table `table`, executing `body`, with
+    `key` bound to the keys of the hash table.
+    
+    Return `result` from the iteration form.
+
+<a id="x-28MLUTILS-3ADOHASHV-20MGL-PAX-3AMACRO-29"></a>
+
+- [macro] **DOHASHV** *(VALUE TABLE &OPTIONAL (RESULT NIL)) &BODY BODY*
+
+    Iterate over the hash table `table`, executing `body`, with 
+    `value` bound to the values of the hash table.
+    
+    Return `result` from the iteration form.
+
 <a id="x-28MLUTILS-3ADOLISTS-20MGL-PAX-3AMACRO-29"></a>
 
 - [macro] **DOLISTS** *((VAR1 LIST1) (VAR2 LIST2) &REST VAR-LIST-SPECS) &BODY BODY*
@@ -217,23 +235,81 @@ Personal list of utils to make Common Lisp feel a bit more like home
 
     Like [`DORANGE`][6428], `to` is inclusive (the range is: \[`from`, `to`\]).
 
+<a id="x-28MLUTILS-3ADOESEQ-20MGL-PAX-3AMACRO-29"></a>
+
+- [macro] **DOESEQ** *(COUNT VAR SEQ &OPTIONAL (RESULT NIL)) &BODY BODY*
+
+    Executes `body` once for each element of `seq`, with `var` bound to the element,
+    and `count` bound to increasing integer values starting from 0.  Then `result`
+    is returned.
+    
+    Note: it's possible to change the count start value by passing in a `LIST`([`0`][79d8] [`1`][6d9f]),
+    instad of a symbol, where the first element is the name of count variable, and
+    the second is the count start value.
+    
+    Note: `DOESEQ` expands to a [`LOOP`][30e1] form, so `var` can either be a symbol, or a
+    lambda-list.
+    
+    Examples:
+    
+        ;; Count starting from 0
+        (doeseq (i x '(a b c d)) (prin1 i) (princ " ") (prin1 x) (princ " "))
+        >> 0 A 1 B 2 C 3 D
+        => NIL
+        
+        ;; Custom count start 
+        (doeseq ((i 1) x '(a b c d)) (prin1 i) (princ " ") (prin1 x) (princ " "))
+        >> 1 A 2 B 3 C 4 D
+        => NIL
+
+
 <a id="x-28MLUTILS-3ADOSEQ-20MGL-PAX-3AMACRO-29"></a>
 
 - [macro] **DOSEQ** *(VAR SEQ &OPTIONAL (RESULT NIL)) &BODY BODY*
 
-    Iterate across the sequence `seq`, binding the variable `var` to
-    each element of the sequence and executing `body`. Return the value
-    [`return`][5b0b] from the iteration form.
+    Executes `body` once for each element of `seq`, with `var` bound to the element.
+    Then `result` is returned.
     
     Note: `DOSEQ` expands to a [`LOOP`][30e1] form, so `var` can either be a symbol, or a
-    lambda-list
+    lambda-list.
+    
+    Examples:
+    
+        ;; Iterate a LIST
+        (doseq (x '(1 2 3 4)) (prin1 x) (princ " "))
+        >> 1 2 3 4
+        => NIL
+        
+        ;; Iterate a SEQUENCE
+        (doseq (x #(1 2 3 4)) (prin1 x) (princ " "))
+        >> 1 2 3 4
+        => NIL
+        
+        ;; Return form
+        (doseq (x '(1 2 3 4) 'ret-form) (prin1 x) (princ " "))
+        >> 1 2 3 4
+        => RET-FORM
+        
+        ;; Iteration with structural binding
+        (doseq ((x _) '((1 a) (2 b) (3 c) (4 d)) 'ret-form) (prin1 x) (princ " "))
+        >> 1 2 3 4
+        => RET-FORM
+
 
 <a id="x-28MLUTILS-3ADOSEQS-20MGL-PAX-3AMACRO-29"></a>
 
 - [macro] **DOSEQS** *((VAR1 SEQ1) (VAR2 SEQ2) &REST VAR-SEQ-SPECS) &BODY BODY*
 
-    Like [`DOSEQ`][d6a5], except this can iterate over multiple sequences at the same
-    time.
+    Like [`DOSEQ`][d6a5], except `DOSEQS` can iterate over multiple sequences in parallel
+    at the same time (it will stop looping as soon as one of the input sequences is
+    exhausted).
+    
+    Unlike `DOSEQ`, `DOSEQS` does not have support for explicitly returning a value at
+    the end of the iteration (e.g., via `result` form); this means `DOSEQS` will
+    always return `NIL`.
+    
+    Also, unlike `DOSEQ`, `DOSEQS` does not expand into a [`LOOP`][30e1] form which means `var1`,
+    `var2`, ..., all need to be symbols.
 
 <a id="x-28MLUTILS-3ADOSUBLISTS-20MGL-PAX-3AMACRO-29"></a>
 
@@ -355,7 +431,7 @@ Personal list of utils to make Common Lisp feel a bit more like home
 - [macro] **LOOPING** *&BODY BODY*
 
     Run `body` in an environment where the symbols `COLLECT!`, `APPEND!`, `ADJOIN!`,
-    `SUM!`, `MULTIPLY!`, `COUNT!`, `MINIMIZE!`, `MAXIMIZE!`, `ALWAYS!`, `NEVER!`, `THEREIS!`, and `SPR!` are
+    `PUSH!`, `SUM!`, `MULTIPLY!`, `COUNT!`, `MINIMIZE!`, `MAXIMIZE!`, `ALWAYS!`, `NEVER!`, `THEREIS!`, and `SPR!` are
     bound to functions that can be used to collect / append, sum, multiply, count,
     minimize or maximize things respectively.
     
@@ -932,7 +1008,6 @@ Personal list of utils to make Common Lisp feel a bit more like home
   [4dee]: http://www.lispworks.com/documentation/HyperSpec/Body/t_number.htm "NUMBER (MGL-PAX:CLHS CLASS)"
   [570e]: http://www.lispworks.com/documentation/HyperSpec/Body/m_defpar.htm "DEFPARAMETER (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [5a85]: http://www.lispworks.com/documentation/HyperSpec/Body/f_slt_va.htm "SLOT-VALUE (MGL-PAX:CLHS FUNCTION)"
-  [5b0b]: http://www.lispworks.com/documentation/HyperSpec/Body/m_return.htm "RETURN (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [5c01]: http://www.lispworks.com/documentation/HyperSpec/Body/m_lambda.htm "LAMBDA (MGL-PAX:CLHS MGL-PAX:MACRO)"
   [609c]: http://www.lispworks.com/documentation/HyperSpec/Body/f_fmakun.htm "FMAKUNBOUND (MGL-PAX:CLHS FUNCTION)"
   [625d]: http://www.lispworks.com/documentation/HyperSpec/Body/m_multip.htm "MULTIPLE-VALUE-BIND (MGL-PAX:CLHS MGL-PAX:MACRO)"
